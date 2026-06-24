@@ -53,11 +53,22 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
     if (!erc20Token) {
       throw new Error(`The token ${token} is not supported by Hinkal on chain ${chainId}.`)
     }
+    const hinkal = await this._createHinkalSession(chainId)
+    return { hinkal, erc20Token }
+  }
+
+  /**
+   * Creates a Hinkal session from this account's signing key on the given chain.
+   *
+   * @private
+   * @param {bigint | number} chainId - The chain to connect the Hinkal signer to.
+   * @returns {Promise<import('@hinkal/common').Hinkal<unknown>>} The prepared Hinkal session.
+   */
+  async _createHinkalSession (chainId) {
     const privKeyBuf = this._account.signingKey.privateKeyBuffer
     const hexKey = '0x' + Array.from(privKeyBuf).map(b => b.toString(16).padStart(2, '0')).join('')
     const hinkalSigner = createSigner(hexKey).connect(createJsonRpcProvider(Number(chainId)))
-    const hinkal = await prepareEthersHinkal(hinkalSigner)
-    return { hinkal, erc20Token }
+    return prepareEthersHinkal(hinkalSigner)
   }
 
   /**
@@ -107,10 +118,7 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
       throw new Error('The wallet must be connected to a provider.')
     }
     const { chainId } = await this._provider.getNetwork()
-    const privKeyBuf = this._account.signingKey.privateKeyBuffer
-    const hexKey = '0x' + Array.from(privKeyBuf).map(b => b.toString(16).padStart(2, '0')).join('')
-    const hinkalSigner = createSigner(hexKey).connect(createJsonRpcProvider(Number(chainId)))
-    const hinkal = await prepareEthersHinkal(hinkalSigner)
+    const hinkal = await this._createHinkalSession(chainId)
     const balances = await hinkal.getStuckShieldedBalances(Number(chainId))
     return balances.map(({ token, balance }) => ({ token: token.erc20TokenAddress, balance }))
   }
