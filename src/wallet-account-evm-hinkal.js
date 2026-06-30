@@ -17,7 +17,6 @@
 import { isAddress } from 'ethers'
 
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
-import { getERC20Token, createSigner, createJsonRpcProvider } from '@hinkal/common'
 import { prepareEthersHinkal } from '@hinkal/common/providers/prepareEthersHinkal'
 
 /** @typedef {import('@tetherto/wdk-wallet-evm').EvmTransferOptions} EvmTransferOptions */
@@ -36,46 +35,26 @@ import { prepareEthersHinkal } from '@hinkal/common/providers/prepareEthersHinka
  */
 export default class WalletAccountEvmHinkal extends WalletAccountEvm {
   /**
-   * Validates the provider connection and token support, then prepares a Hinkal session.
+   * Prepares a Hinkal session for the account's current chain.
    *
    * @private
-   * @param {string} token - The token address to validate.
-   * @returns {Promise<{ hinkal: import('@hinkal/common').Hinkal<unknown>, erc20Token: object }>}
+   * @returns {Promise<{ hinkal: import('@hinkal/common').Hinkal<unknown>, chainId: number }>}
    * @throws {Error} If the wallet is not connected to a provider.
-   * @throws {Error} If the token is not supported by Hinkal on the current chain.
    */
-  async _prepareHinkal (token) {
+  async _prepareHinkal () {
     if (!this._account.provider) {
       throw new Error('The wallet must be connected to a provider.')
     }
     const { chainId } = await this._provider.getNetwork()
-    const erc20Token = getERC20Token(token, Number(chainId))
-    if (!erc20Token) {
-      throw new Error(`The token ${token} is not supported by Hinkal on chain ${chainId}.`)
-    }
-    const hinkal = await this._createHinkalSession(chainId)
-    return { hinkal, erc20Token }
-  }
-
-  /**
-   * Creates a Hinkal session from this account's signing key on the given chain.
-   *
-   * @private
-   * @param {bigint | number} chainId - The chain to connect the Hinkal signer to.
-   * @returns {Promise<import('@hinkal/common').Hinkal<unknown>>} The prepared Hinkal session.
-   */
-  async _createHinkalSession (chainId) {
-    const privKeyBuf = this._account.signingKey.privateKeyBuffer
-    const hexKey = '0x' + Array.from(privKeyBuf).map(b => b.toString(16).padStart(2, '0')).join('')
-    const hinkalSigner = createSigner(hexKey).connect(createJsonRpcProvider(Number(chainId)))
-    return prepareEthersHinkal(hinkalSigner)
+    const hinkal = await prepareEthersHinkal(this._account)
+    return { hinkal, chainId: Number(chainId) }
   }
 
   /**
    * Sends a token to another address privately through Hinkal.
    *
    * @param {EvmTransferOptions} options - The transfer's options (`amount` in base units).
-   * @returns {Promise<{ hash: string }>} The transaction hash.
+   * @returns {Promise<{ hash: string }>} The deposit transaction's hash.
    * @throws {Error} If the recipient address is invalid.
    * @throws {Error} If the amount is not positive.
    * @throws {Error} If the token is not supported by Hinkal on the account's chain.
@@ -88,9 +67,9 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
     if (parsedAmount <= 0n) {
       throw new Error('Amount must be positive.')
     }
-    const { hinkal, erc20Token } = await this._prepareHinkal(token)
-    const hash = await hinkal.depositAndWithdraw(erc20Token, [parsedAmount], [recipient])
-    return { hash }
+    const { hinkal, chainId } = await this._prepareHinkal()
+    const { depositTxHash } = await hinkal.depositAndWithdraw(chainId, token, [parsedAmount], [recipient])
+    return { hash: depositTxHash }
   }
 
   /**
@@ -101,9 +80,9 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @throws {Error} If the token is not supported by Hinkal on the account's chain.
    */
   async withdrawStuckUtxos ({ token }) {
-    const { hinkal, erc20Token } = await this._prepareHinkal(token)
+    const { hinkal, chainId } = await this._prepareHinkal()
     const recipient = await this.getAddress()
-    const hashes = await hinkal.withdrawStuckUtxos(erc20Token, recipient)
+    const hashes = await hinkal.withdrawStuckUtxos(chainId, token, recipient)
     return { hashes }
   }
 
@@ -114,12 +93,8 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @throws {Error} If the wallet is not connected to a provider.
    */
   async stuckUtxoBalances () {
-    if (!this._account.provider) {
-      throw new Error('The wallet must be connected to a provider.')
-    }
-    const { chainId } = await this._provider.getNetwork()
-    const hinkal = await this._createHinkalSession(chainId)
-    const balances = await hinkal.getStuckShieldedBalances(Number(chainId))
+    const { hinkal, chainId } = await this._prepareHinkal()
+    const balances = await hinkal.getStuckShieldedBalances(chainId)
     return balances.map(({ token, balance }) => ({ token: token.erc20TokenAddress, balance }))
   }
 }

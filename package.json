@@ -22,7 +22,7 @@
     "lint:fix": "standard --fix"
   },
   "dependencies": {
-    "@hinkal/common": "^0.2.36",
+    "@hinkal/common": "^0.3.1",
     "@tetherto/wdk-wallet-evm": "^1.0.0-beta.13",
     "ethers": "^6.15.0",
     "viem": "^2.21.0"
@@ -30,6 +30,9 @@
   "devDependencies": {
     "standard": "^17.1.2",
     "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "lodash": "npm:lodash-es@^4.18.1"
   },
   "exports": {
     ".": {
