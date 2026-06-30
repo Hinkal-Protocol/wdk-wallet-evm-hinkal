@@ -130,8 +130,8 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
       this._provider.getNetwork()
     ])
     const balances = await hinkal.getStuckShieldedBalances(Number(chainId))
-    return balances.map(({ token, balance }) => ({
-      token: token.erc20TokenAddress,
+    return balances.map(({ erc20Address, balance }) => ({
+      token: erc20Address,
       balance
     }))
   }
