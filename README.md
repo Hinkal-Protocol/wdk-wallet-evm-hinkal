@@ -13,13 +13,13 @@ All existing WDK wallet methods work unchanged.
 ## Installation
 
 ```sh
-npm install @hinkal/wdk-wallet-evm-hinkal
+npm install @hinkal-wdk-modules/wdk-wallet-evm-hinkal
 ```
 
 ## Usage
 
 ```js
-import WalletManagerEvmHinkal from '@hinkal/wdk-wallet-evm-hinkal'
+import WalletManagerEvmHinkal from '@hinkal-wdk-modules/wdk-wallet-evm-hinkal'
 
 const wallet = new WalletManagerEvmHinkal(seed, { provider: 'https://mainnet.optimism.io' })
 const account = await wallet.getAccount(0)
