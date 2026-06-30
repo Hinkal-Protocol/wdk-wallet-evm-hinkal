@@ -1,24 +1,20 @@
-# wdk-wallet-evm-hinkal
+# @hinkal/wdk-wallet-evm-hinkal
 
-A [WDK](https://docs.wdk.tether.io) community wallet module that adds [Hinkal](https://hinkal.pro)
-private transfers to EVM wallet accounts.
+Adds [Hinkal] private transfer support to EVM wallets built with [WDK](https://docs.wdk.tether.io).
 
-It extends [`@tetherto/wdk-wallet-evm`](https://www.npmjs.com/package/@tetherto/wdk-wallet-evm),
-so every standard account method keeps working and three Hinkal methods are added on top:
+Hinkal is a privacy protocol that shields token transfers on-chain. This package wraps `@tetherto/wdk-wallet-evm` and adds three methods to every account:
 
-- `privateSend` — shielded deposit and withdrawal to a recipient in a single call.
-- `withdrawStuckUtxos` — recover stranded shielded UTXOs back to your own address.
-- `stuckUtxoBalances` — list recoverable shielded balances per token.
+- **`privateSend`** — send tokens to any address privately. The transfer is shielded through Hinkal so the link between sender and recipient is hidden on-chain.
+- **`withdrawStuckUtxos`** — recover any shielded balances that got stuck in Hinkal back to your own address.
+- **`stuckUtxoBalances`** — check how much shielded balance is recoverable per token.
+
+All existing WDK wallet methods work unchanged.
 
 ## Installation
 
 ```sh
 npm install @hinkal/wdk-wallet-evm-hinkal
 ```
-
-> **Note:** This module depends on `@hinkal/common`, which is distributed for bundled
-> environments. Use it through a bundler (Vite, webpack, React Native / Metro, or bare) rather
-> than plain Node.js ESM.
 
 ## Usage
 
@@ -28,35 +24,15 @@ import WalletManagerEvmHinkal from '@hinkal/wdk-wallet-evm-hinkal'
 const wallet = new WalletManagerEvmHinkal(seed, { provider: 'https://mainnet.optimism.io' })
 const account = await wallet.getAccount(0)
 
-// Send 1 USDC privately through Hinkal.
+// Send tokens privately through Hinkal
 const { hash } = await account.privateSend({
-  token: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
+  token: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85', // USDC on Optimism
   recipient: '0x...',
-  amount: 1_000_000n
+  amount: 1_000_000n // 1 USDC in base units
 })
-
-// Inspect and recover stuck shielded balances.
-const balances = await account.stuckUtxoBalances()
-if (balances.length > 0) {
-  await account.withdrawStuckUtxos({ token: balances[0].token })
-}
 ```
 
-## API
-
-### `account.privateSend({ token, recipient, amount }) => Promise<{ hash }>`
-
-Privately transfers `amount` (base units) of `token` to `recipient` via Hinkal's
-`depositAndWithdraw`. Throws if the recipient is not a valid address, the amount is not
-positive, or the token is unsupported on the account's chain.
-
-### `account.withdrawStuckUtxos({ token }) => Promise<{ hashes }>`
-
-Recovers stranded shielded UTXOs of `token` back to the account's own address.
-
-### `account.stuckUtxoBalances() => Promise<Array<{ token, balance }>>`
-
-Returns the recoverable shielded balance per token. An empty array means nothing is stuck.
+> Requires a bundler (Vite, webpack, Metro, or bare) — `@hinkal/common` is not plain Node.js ESM compatible.
 
 ## License
 
