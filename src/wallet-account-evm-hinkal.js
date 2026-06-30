@@ -35,26 +35,37 @@ import { prepareEthersHinkal } from '@hinkal/common/providers/prepareEthersHinka
  */
 export default class WalletAccountEvmHinkal extends WalletAccountEvm {
   /**
-   * Prepares a Hinkal session for the account's current chain.
+   * Returns the account's Hinkal session, creating it on first use.
    *
    * @private
-   * @returns {Promise<{ hinkal: import('@hinkal/common').Hinkal<unknown>, chainId: number }>}
+   * @returns {Promise<import('@hinkal/common').Hinkal<unknown>>}
    * @throws {Error} If the wallet is not connected to a provider.
    */
   async _prepareHinkal () {
     if (!this._account.provider) {
       throw new Error('The wallet must be connected to a provider.')
     }
-    const { chainId } = await this._provider.getNetwork()
-    const hinkal = await prepareEthersHinkal(this._account)
-    return { hinkal, chainId: Number(chainId) }
+    if (!this._hinkalSession) {
+      this._hinkalSession = prepareEthersHinkal(this._account)
+    }
+    try {
+      return await this._hinkalSession
+    } catch (err) {
+      this._hinkalSession = undefined
+      throw err
+    }
   }
 
   /**
    * Sends a token to another address privately through Hinkal.
    *
+   * The send is scheduled: the funds are deposited on-chain now and the private
+   * withdrawal to the recipient settles afterwards. Use `scheduleId` with
+   * {@link getSendStatus} to track that withdrawal.
+   *
    * @param {EvmTransferOptions} options - The transfer's options (`amount` in base units).
-   * @returns {Promise<{ hash: string }>} The deposit transaction's hash.
+   * @returns {Promise<{ depositTxHash: string, scheduleId: string }>} The deposit
+   *   transaction's hash and the scheduled send's id.
    * @throws {Error} If the recipient address is invalid.
    * @throws {Error} If the amount is not positive.
    * @throws {Error} If the token is not supported by Hinkal on the account's chain.
@@ -67,9 +78,28 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
     if (parsedAmount <= 0n) {
       throw new Error('Amount must be positive.')
     }
-    const { hinkal, chainId } = await this._prepareHinkal()
-    const { depositTxHash } = await hinkal.depositAndWithdraw(chainId, token, [parsedAmount], [recipient])
-    return { hash: depositTxHash }
+    const [hinkal, { chainId }] = await Promise.all([
+      this._prepareHinkal(),
+      this._provider.getNetwork()
+    ])
+    return hinkal.depositAndWithdraw(
+      Number(chainId),
+      token,
+      [parsedAmount],
+      [recipient]
+    )
+  }
+
+  /**
+   * Returns the status of a scheduled private send.
+   *
+   * @param {string} scheduleId - The id returned by {@link privateSend}.
+   * @returns {Promise<import('@hinkal/common').ScheduledTransactionByIdResponse>} The send's status.
+   * @throws {Error} If the wallet is not connected to a provider.
+   */
+  async getSendStatus (scheduleId) {
+    const hinkal = await this._prepareHinkal()
+    return hinkal.checkSendTransactionStatus(scheduleId)
   }
 
   /**
@@ -80,10 +110,12 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @throws {Error} If the token is not supported by Hinkal on the account's chain.
    */
   async withdrawStuckUtxos ({ token }) {
-    const { hinkal, chainId } = await this._prepareHinkal()
-    const recipient = await this.getAddress()
-    const hashes = await hinkal.withdrawStuckUtxos(chainId, token, recipient)
-    return { hashes }
+    const [hinkal, { chainId }, recipient] = await Promise.all([
+      this._prepareHinkal(),
+      this._provider.getNetwork(),
+      this.getAddress()
+    ])
+    return { hashes: await hinkal.withdrawStuckUtxos(Number(chainId), token, recipient) }
   }
 
   /**
@@ -93,8 +125,14 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @throws {Error} If the wallet is not connected to a provider.
    */
   async stuckUtxoBalances () {
-    const { hinkal, chainId } = await this._prepareHinkal()
-    const balances = await hinkal.getStuckShieldedBalances(chainId)
-    return balances.map(({ token, balance }) => ({ token: token.erc20TokenAddress, balance }))
+    const [hinkal, { chainId }] = await Promise.all([
+      this._prepareHinkal(),
+      this._provider.getNetwork()
+    ])
+    const balances = await hinkal.getStuckShieldedBalances(Number(chainId))
+    return balances.map(({ token, balance }) => ({
+      token: token.erc20TokenAddress,
+      balance
+    }))
   }
 }
