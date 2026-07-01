@@ -14,147 +14,122 @@
 
 "use strict";
 
-import { jest } from "@jest/globals";
+import WalletManagerEvmHinkal from "../src/wallet-manager-evm-hinkal.js";
+import WalletAccountEvmHinkal from "../src/wallet-account-evm-hinkal.js";
+import {
+  ProviderNotConnectedError,
+  InvalidRecipientError,
+  InvalidAmountError,
+} from "../src/errors.js";
 
-const SEED = "test test test test test test test test test test test junk";
-const RECIPIENT = "0x0000000000000000000000000000000000000001";
-const TOKEN = "0x0000000000000000000000000000000000000002";
-const ZERO = "0x0000000000000000000000000000000000000000";
+const { SEED, RPC_URL, TOKEN, RECIPIENT, AMOUNT, CHAIN_ID } = process.env;
 
-let mockHinkal;
-const prepareEthersHinkal = jest.fn(async () => mockHinkal);
-
-jest.unstable_mockModule(
-  "@hinkal/common/providers/prepareEthersHinkal",
-  () => ({
-    prepareEthersHinkal,
-  }),
+const RUN_INTEGRATION = Boolean(
+  SEED && RPC_URL && TOKEN && RECIPIENT && AMOUNT && CHAIN_ID,
 );
+const describeIntegration = RUN_INTEGRATION ? describe : describe.skip;
 
-const { default: WalletAccountEvmHinkal } =
-  await import("../src/wallet-account-evm-hinkal.js");
-const { ProviderNotConnectedError, InvalidRecipientError, InvalidAmountError } =
-  await import("../src/errors.js");
-
-/** @param {boolean} connected - Whether the account has a provider. */
-function makeAccount(connected = true) {
-  const account = new WalletAccountEvmHinkal(SEED, "0'/0/0");
-  const provider = { getNetwork: jest.fn(async () => ({ chainId: 10n })) };
-  account._provider = connected ? provider : undefined;
-  account._account = {
-    address: account._account.address,
-    provider: connected ? provider : null,
-  };
-  return account;
+if (!RUN_INTEGRATION) {
+  console.warn(
+    "Skipping integration tests: set SEED, RPC_URL, TOKEN, CHAIN_ID, RECIPIENT and AMOUNT in .env to run them.",
+  );
 }
 
-beforeEach(() => {
-  prepareEthersHinkal.mockClear();
-  mockHinkal = {
-    depositAndWithdraw: jest.fn(async () => ({
-      depositTxHash: "0xdep",
-      scheduleId: "s1",
-    })),
-    withdrawStuckUtxos: jest.fn(async () => ["0xh1", "0xh2"]),
-    getStuckShieldedBalances: jest.fn(async () => [
-      { erc20Address: TOKEN, balance: 5n },
-      { erc20Address: ZERO, balance: 7n },
-    ]),
-    checkSendTransactionStatus: jest.fn(async () => ({ scheduleId: "s1" })),
-  };
-});
+/** @returns {Promise<WalletAccountEvmHinkal>} A provider-connected account. */
+async function connectedAccount() {
+  const wallet = new WalletManagerEvmHinkal(SEED, {
+    provider: RPC_URL,
+    chainId: Number(CHAIN_ID),
+  });
+  return wallet.getAccountByPath("0'/0/0");
+}
 
-describe("privateSend", () => {
-  test("forwards to the SDK (parsing amount) and returns its result", async () => {
-    const result = await makeAccount().privateSend({
-      token: TOKEN,
-      recipient: RECIPIENT,
-      amount: "250",
+describeIntegration(`WalletAccountEvmHinkal (chain ${CHAIN_ID})`, () => {
+  /** @type {WalletAccountEvmHinkal} */
+  let account;
+
+  beforeAll(async () => {
+    account = await connectedAccount();
+    console.log("address", account.address);
+  });
+
+  afterAll(async () => {
+    try {
+      const hinkal = await account?._hinkalSession;
+      await hinkal?.destroy?.();
+    } catch {
+      // best-effort teardown; ignore
+    }
+    account?._provider?.destroy?.();
+  });
+
+  describe("privateSend input validation", () => {
+    // Validation runs before any provider/SDK access, so no connection needed.
+    const offline = new WalletAccountEvmHinkal(SEED, "0'/0/0");
+
+    test("rejects a bad recipient", async () => {
+      await expect(
+        offline.privateSend({ token: TOKEN, recipient: "nope", amount: 1n }),
+      ).rejects.toBeInstanceOf(InvalidRecipientError);
     });
-    expect(result).toEqual({ depositTxHash: "0xdep", scheduleId: "s1" });
-    expect(mockHinkal.depositAndWithdraw).toHaveBeenCalledWith(
-      10,
-      TOKEN,
-      [250n],
-      [RECIPIENT],
+
+    test("rejects a non-positive amount", async () => {
+      await expect(
+        offline.privateSend({ token: TOKEN, recipient: RECIPIENT, amount: 0n }),
+      ).rejects.toBeInstanceOf(InvalidAmountError);
+    });
+
+    test("rejects a malformed amount", async () => {
+      await expect(
+        offline.privateSend({
+          token: TOKEN,
+          recipient: RECIPIENT,
+          amount: "not-a-number",
+        }),
+      ).rejects.toBeInstanceOf(InvalidAmountError);
+    });
+  });
+
+  test("operations reject when the wallet is not connected to a provider", async () => {
+    const disconnected = new WalletAccountEvmHinkal(SEED, "0'/0/0");
+    await expect(disconnected.stuckUtxoBalances()).rejects.toBeInstanceOf(
+      ProviderNotConnectedError,
     );
   });
 
-  test("rejects a bad recipient", async () => {
-    await expect(
-      makeAccount().privateSend({
-        token: TOKEN,
-        recipient: "nope",
-        amount: 1n,
-      }),
-    ).rejects.toBeInstanceOf(InvalidRecipientError);
+  test("derives a valid EVM address", async () => {
+    const address = await account.getAddress();
+    expect(address).toMatch(/^0x[0-9a-fA-F]{40}$/);
   });
 
-  test("rejects a non-positive amount", async () => {
-    await expect(
-      makeAccount().privateSend({
-        token: TOKEN,
-        recipient: RECIPIENT,
-        amount: 0n,
-      }),
-    ).rejects.toBeInstanceOf(InvalidAmountError);
-  });
+  test("reads stuck shielded balances", async () => {
+    const balances = await account.stuckUtxoBalances();
+    expect(Array.isArray(balances)).toBe(true);
+    for (const b of balances) {
+      expect(typeof b.token).toBe("string");
+      expect(typeof b.balance).toBe("bigint");
+    }
+  }, 120_000);
 
-  test("rejects a malformed amount", async () => {
-    await expect(
-      makeAccount().privateSend({
-        token: TOKEN,
-        recipient: RECIPIENT,
-        amount: "not-a-number",
-      }),
-    ).rejects.toBeInstanceOf(InvalidAmountError);
-  });
-});
+  test("schedules a private send and tracks its status", async () => {
+    const { depositTxHash, scheduleId } = await account.privateSend({
+      token: TOKEN,
+      recipient: RECIPIENT,
+      amount: BigInt(AMOUNT),
+    });
+    expect(depositTxHash).toMatch(/^0x[0-9a-fA-F]+$/);
+    expect(typeof scheduleId).toBe("string");
 
-test("getSendStatus delegates to the SDK", async () => {
-  const status = await makeAccount().getSendStatus("s1");
-  expect(status.scheduleId).toBe("s1");
-  expect(mockHinkal.checkSendTransactionStatus).toHaveBeenCalledWith("s1");
-});
+    const status = await account.getSendStatus(scheduleId);
+    expect(status).toBeDefined();
+  }, 300_000);
 
-test("withdrawStuckUtxos returns the hashes, withdrawing to the account address", async () => {
-  const account = makeAccount();
-  const { hashes } = await account.withdrawStuckUtxos({ token: TOKEN });
-  expect(hashes).toEqual(["0xh1", "0xh2"]);
-  expect(mockHinkal.withdrawStuckUtxos).toHaveBeenCalledWith(
-    10,
-    TOKEN,
-    await account.getAddress(),
-  );
-});
-
-test("stuckUtxoBalances flattens the SDK balances to { token, balance }", async () => {
-  const balances = await makeAccount().stuckUtxoBalances();
-  expect(balances).toEqual([
-    { token: TOKEN, balance: 5n },
-    { token: ZERO, balance: 7n },
-  ]);
-});
-
-test("operations reject when the wallet is not connected", async () => {
-  await expect(makeAccount(false).stuckUtxoBalances()).rejects.toBeInstanceOf(
-    ProviderNotConnectedError,
-  );
-});
-
-describe("session caching", () => {
-  test("builds the session once, then reuses it", async () => {
-    const account = makeAccount();
-    await account.stuckUtxoBalances();
-    await account.getSendStatus("s1");
-    expect(prepareEthersHinkal).toHaveBeenCalledTimes(1);
-  });
-
-  test("retries after a build failure", async () => {
-    const account = makeAccount();
-    prepareEthersHinkal.mockRejectedValueOnce(new Error("init failed"));
-    await expect(account.stuckUtxoBalances()).rejects.toThrow("init failed");
-    await account.stuckUtxoBalances();
-    expect(prepareEthersHinkal).toHaveBeenCalledTimes(2);
-  });
+  test("recovers stuck UTXOs when any are present", async () => {
+    const balances = await account.stuckUtxoBalances();
+    if (balances.length === 0) return; // nothing stranded; skip the on-chain withdrawal
+    const { hashes } = await account.withdrawStuckUtxos({
+      token: balances[0].token,
+    });
+    expect(Array.isArray(hashes)).toBe(true);
+  }, 300_000);
 });

@@ -14,20 +14,8 @@
 
 "use strict";
 
-import { jest } from "@jest/globals";
-
-// The account module imports the Hinkal session builder at load time, which
-// pulls in heavy dependencies. Mock it so the manager tests load
-// without touching the real SDK.
-jest.unstable_mockModule(
-  "@hinkal/common/providers/prepareEthersHinkal",
-  () => ({ prepareEthersHinkal: jest.fn() }),
-);
-
-const { default: WalletManagerEvmHinkal } =
-  await import("../src/wallet-manager-evm-hinkal.js");
-const { default: WalletAccountEvmHinkal } =
-  await import("../src/wallet-account-evm-hinkal.js");
+import WalletManagerEvmHinkal from "../src/wallet-manager-evm-hinkal.js";
+import WalletAccountEvmHinkal from "../src/wallet-account-evm-hinkal.js";
 
 const TEST_SEED = "test test test test test test test test test test test junk";
 
