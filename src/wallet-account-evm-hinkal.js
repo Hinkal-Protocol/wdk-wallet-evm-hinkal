@@ -95,7 +95,12 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
     if (!isAddress(recipient)) {
       throw new InvalidRecipientError(recipient)
     }
-    const parsedAmount = BigInt(amount)
+    let parsedAmount
+    try {
+      parsedAmount = BigInt(amount)
+    } catch {
+      throw new InvalidAmountError(amount)
+    }
     if (parsedAmount <= 0n) {
       throw new InvalidAmountError(amount)
     }

@@ -71,7 +71,7 @@ export class InvalidAmountError extends HinkalError {
    * @param {bigint | number | string} amount - The offending amount value.
    */
   constructor (amount) {
-    super(`Amount must be positive: ${amount}`, true)
+    super(`Amount must be a positive number: ${amount}`, true)
 
     this.name = 'InvalidAmountError'
     this.amount = amount

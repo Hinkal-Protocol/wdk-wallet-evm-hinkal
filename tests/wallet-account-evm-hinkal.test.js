@@ -99,6 +99,16 @@ describe("privateSend", () => {
       }),
     ).rejects.toBeInstanceOf(InvalidAmountError);
   });
+
+  test("rejects a malformed amount", async () => {
+    await expect(
+      makeAccount().privateSend({
+        token: TOKEN,
+        recipient: RECIPIENT,
+        amount: "not-a-number",
+      }),
+    ).rejects.toBeInstanceOf(InvalidAmountError);
+  });
 });
 
 test("getSendStatus delegates to the SDK", async () => {
