@@ -105,9 +105,15 @@ unsupported token) propagate as-is.
 ## Testing
 
 ```sh
-npm test              # unit tests (mocked SDK, no network)
+npm test
 npm run test:coverage
 ```
+
+Runs the unit tests (real modules, no network) plus the integration tests
+(real Hinkal SDK against a live EVM testnet). The integration tests skip
+themselves unless a `.env` provides the required vars — `SEED`, `RPC_URL`,
+`TOKEN`, `CHAIN_ID`, `RECIPIENT`, `AMOUNT` (see
+[`.env.example`](./.env.example)). When set, `npm test` **moves real funds**.
 
 ## Support
 

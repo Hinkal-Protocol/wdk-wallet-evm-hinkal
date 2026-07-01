@@ -38,9 +38,8 @@
     "build:types": "tsc",
     "lint": "standard",
     "lint:fix": "standard --fix",
-    "test": "jest",
-    "test:coverage": "jest --coverage",
-    "test:integration": "jest tests/wallet-account-evm-hinkal.test.js --runInBand --forceExit",
+    "test": "jest --runInBand --forceExit",
+    "test:coverage": "jest --coverage --runInBand --forceExit",
     "prepublishOnly": "npm run build:types"
   },
   "dependencies": {
