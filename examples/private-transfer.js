@@ -18,8 +18,8 @@
 // (the Hinkal SDK is not plain Node.js ESM compatible). See `.env.example`.
 //
 //   SEED       BIP-39 mnemonic of the wallet
-//   RPC_URL    EVM RPC endpoint (e.g. https://mainnet.optimism.io)
-//   TOKEN      ERC-20 token address (e.g. USDC on Optimism)
+//   RPC_URL    EVM RPC endpoint (e.g. an Ethereum Sepolia RPC)
+//   TOKEN      ERC-20 token address supported by Hinkal on that chain
 //   RECIPIENT  Destination address for the private send
 //   AMOUNT     Amount in the token's base units
 

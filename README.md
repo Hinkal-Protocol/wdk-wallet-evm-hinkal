@@ -38,15 +38,15 @@ npm install @hinkal/wdk-wallet-evm
 import WalletManagerEvmHinkal from "@hinkal/wdk-wallet-evm";
 
 const wallet = new WalletManagerEvmHinkal(seed, {
-  provider: "https://mainnet.optimism.io",
+  provider: "https://ethereum-sepolia-rpc.publicnode.com", // any EVM RPC
 });
 const account = await wallet.getAccount(0);
 
 // Send tokens privately through Hinkal.
 const { depositTxHash, scheduleId } = await account.privateSend({
-  token: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", // USDC on Optimism
+  token: "0x...", // an ERC-20 supported by Hinkal on the connected chain
   recipient: "0x...",
-  amount: 1_000_000n, // 1 USDC in base units
+  amount: 1_000_000n, // in the token's base units
 });
 
 // Track the scheduled withdrawal.
@@ -54,7 +54,7 @@ const status = await account.getSendStatus(scheduleId);
 
 // Inspect and recover stuck shielded balances.
 const balances = await account.stuckUtxoBalances();
-const { hashes } = await account.withdrawStuckUtxos({ token: "0x0b2C63..." });
+const { hashes } = await account.withdrawStuckUtxos({ token: "0x..." });
 ```
 
 See [`examples/`](./examples) for a runnable script.
@@ -105,7 +105,7 @@ unsupported token) propagate as-is.
 ## Testing
 
 ```sh
-npm test            # unit tests (mocked SDK, no network)
+npm test              # unit tests (mocked SDK, no network)
 npm run test:coverage
 ```
 
