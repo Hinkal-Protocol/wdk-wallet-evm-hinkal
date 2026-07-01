@@ -3,6 +3,13 @@
  */
 export default class WalletManagerEvmHinkal extends WalletManagerEvm {
   /**
+   * Returns the Hinkal-enabled wallet account at a specific index.
+   *
+   * @param {number} [index] - The index of the account to get (default: 0).
+   * @returns {Promise<WalletAccountEvmHinkal>} The account.
+   */
+  getAccount(index?: number): Promise<WalletAccountEvmHinkal>;
+  /**
    * Returns the Hinkal-enabled wallet account at a specific BIP-44 derivation path.
    *
    * @param {string} path - The derivation path (e.g. "0'/0/0").
