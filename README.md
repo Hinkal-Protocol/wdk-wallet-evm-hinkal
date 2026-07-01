@@ -1,4 +1,4 @@
-# @hinkal-wdk-modules/wdk-wallet-evm-hinkal
+# @hinkal/wdk-wallet-evm
 
 [![Powered by WDK](https://img.shields.io/badge/Powered%20by-WDK-blue)](https://docs.wdk.tether.io)
 
@@ -23,7 +23,7 @@ Implements the [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wall
 ## Installation
 
 ```sh
-npm install @hinkal-wdk-modules/wdk-wallet-evm-hinkal
+npm install @hinkal/wdk-wallet-evm
 ```
 
 > Requires a bundler (Vite, webpack, Metro, or Bare) — `@hinkal/common` is not plain Node.js ESM compatible.
@@ -35,7 +35,7 @@ npm install @hinkal-wdk-modules/wdk-wallet-evm-hinkal
 ## Usage
 
 ```js
-import WalletManagerEvmHinkal from "@hinkal-wdk-modules/wdk-wallet-evm-hinkal";
+import WalletManagerEvmHinkal from "@hinkal/wdk-wallet-evm";
 
 const wallet = new WalletManagerEvmHinkal(seed, {
   provider: "https://mainnet.optimism.io",
@@ -81,7 +81,7 @@ carries an `isUserActionable` flag so a wallet UI can tell end-user errors (bad
 input) apart from developer errors (misconfiguration):
 
 ```js
-import { HinkalError } from "@hinkal-wdk-modules/wdk-wallet-evm-hinkal";
+import { HinkalError } from "@hinkal/wdk-wallet-evm";
 
 try {
   await account.privateSend(opts);
