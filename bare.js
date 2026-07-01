@@ -11,16 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+'use strict'
 
-"use strict";
+import 'bare-node-runtime/global'
 
-export { default } from "./src/wallet-manager-evm-hinkal.js";
+export * from './index.js' with { imports: 'bare-node-runtime/imports' }
 
-export { default as WalletAccountEvmHinkal } from "./src/wallet-account-evm-hinkal.js";
-
-export {
-  HinkalError,
-  ProviderNotConnectedError,
-  InvalidRecipientError,
-  InvalidAmountError,
-} from "./src/errors.js";
+export { default } from './index.js' with { imports: 'bare-node-runtime/imports' }

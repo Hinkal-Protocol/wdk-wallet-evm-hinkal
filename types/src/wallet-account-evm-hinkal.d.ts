@@ -1,38 +1,9 @@
-// Copyright 2026 Hinkal Protocol
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-'use strict'
-
-import { isAddress } from 'ethers'
-
-import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
-import { prepareEthersHinkal } from '@hinkal/common/providers/prepareEthersHinkal'
-
-import {
-  ProviderNotConnectedError,
-  InvalidRecipientError,
-  InvalidAmountError
-} from './errors.js'
-
 /** @typedef {import('@tetherto/wdk-wallet-evm').EvmTransferOptions} EvmTransferOptions */
-
 /**
  * @typedef {Object} StuckUtxoBalance
  * @property {string} token - The token's address.
  * @property {bigint} balance - The recoverable shielded balance, in base units.
  */
-
 /**
  * An EVM wallet account with Hinkal private-transfer support.
  *
@@ -47,21 +18,8 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @returns {Promise<import('@hinkal/common').Hinkal<unknown>>}
    * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
    */
-  async _prepareHinkal () {
-    if (!this._account.provider) {
-      throw new ProviderNotConnectedError()
-    }
-    if (!this._hinkalSession) {
-      this._hinkalSession = prepareEthersHinkal(this._account)
-    }
-    try {
-      return await this._hinkalSession
-    } catch (err) {
-      this._hinkalSession = undefined
-      throw err
-    }
-  }
-
+  private _prepareHinkal;
+  _hinkalSession: Promise<import("@hinkal/common").Hinkal<unknown>>;
   /**
    * Returns the chain id the account's provider is connected to.
    *
@@ -69,14 +27,7 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @returns {Promise<number>}
    * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
    */
-  async _chainId () {
-    if (!this._account.provider) {
-      throw new ProviderNotConnectedError()
-    }
-    const { chainId } = await this._provider.getNetwork()
-    return Number(chainId)
-  }
-
+  private _chainId;
   /**
    * Sends a token to another address privately through Hinkal.
    *
@@ -91,26 +42,10 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @throws {InvalidAmountError} If the amount is not positive.
    * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
    */
-  async privateSend ({ token, recipient, amount }) {
-    if (!isAddress(recipient)) {
-      throw new InvalidRecipientError(recipient)
-    }
-    const parsedAmount = BigInt(amount)
-    if (parsedAmount <= 0n) {
-      throw new InvalidAmountError(amount)
-    }
-    const [hinkal, chainId] = await Promise.all([
-      this._prepareHinkal(),
-      this._chainId()
-    ])
-    return hinkal.depositAndWithdraw(
-      chainId,
-      token,
-      [parsedAmount],
-      [recipient]
-    )
-  }
-
+  privateSend({ token, recipient, amount }: EvmTransferOptions): Promise<{
+    depositTxHash: string;
+    scheduleId: string;
+  }>;
   /**
    * Returns the status of a scheduled private send.
    *
@@ -118,11 +53,9 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @returns {Promise<import('@hinkal/common').ScheduledTransactionByIdResponse>} The send's status.
    * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
    */
-  async getSendStatus (scheduleId) {
-    const hinkal = await this._prepareHinkal()
-    return hinkal.checkSendTransactionStatus(scheduleId)
-  }
-
+  getSendStatus(
+    scheduleId: string,
+  ): Promise<import("@hinkal/common").ScheduledTransactionByIdResponse>;
   /**
    * Withdraws this account's stuck Hinkal UTXOs of a token back to its own address.
    *
@@ -130,30 +63,27 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @returns {Promise<{ hashes: string[] }>} The withdrawal transactions' hashes.
    * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
    */
-  async withdrawStuckUtxos ({ token }) {
-    const [hinkal, chainId, recipient] = await Promise.all([
-      this._prepareHinkal(),
-      this._chainId(),
-      this.getAddress()
-    ])
-    return { hashes: await hinkal.withdrawStuckUtxos(chainId, token, recipient) }
-  }
-
+  withdrawStuckUtxos({ token }: { token: string }): Promise<{
+    hashes: string[];
+  }>;
   /**
    * Returns this account's stuck Hinkal shielded balances (UTXOs awaiting recovery).
    *
    * @returns {Promise<StuckUtxoBalance[]>} The stuck balance per token.
    * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
    */
-  async stuckUtxoBalances () {
-    const [hinkal, chainId] = await Promise.all([
-      this._prepareHinkal(),
-      this._chainId()
-    ])
-    const balances = await hinkal.getStuckShieldedBalances(chainId)
-    return balances.map(({ erc20Address, balance }) => ({
-      token: erc20Address,
-      balance
-    }))
-  }
+  stuckUtxoBalances(): Promise<StuckUtxoBalance[]>;
 }
+export type EvmTransferOptions =
+  import("@tetherto/wdk-wallet-evm").EvmTransferOptions;
+export type StuckUtxoBalance = {
+  /**
+   * - The token's address.
+   */
+  token: string;
+  /**
+   * - The recoverable shielded balance, in base units.
+   */
+  balance: bigint;
+};
+import { WalletAccountEvm } from "@tetherto/wdk-wallet-evm";

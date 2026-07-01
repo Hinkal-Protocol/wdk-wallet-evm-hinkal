@@ -2,9 +2,18 @@
   "name": "@hinkal-wdk-modules/wdk-wallet-evm-hinkal",
   "version": "0.0.2",
   "description": "WDK community module adding Hinkal private transfers to EVM wallet accounts.",
-  "keywords": ["wdk", "wallet", "evm", "hinkal", "privacy", "wdk-hinkal", "private-transfer", "shielded"],
+  "keywords": [
+    "wdk",
+    "wallet",
+    "evm",
+    "hinkal",
+    "privacy",
+    "wdk-hinkal",
+    "private-transfer",
+    "shielded"
+  ],
   "license": "Apache-2.0",
-  "author": "Hinkal <dev@hinkal.io>",
+  "author": "Hinkal <support@hinkal.pro>",
   "homepage": "https://hinkal.io",
   "repository": {
     "type": "git",
@@ -16,27 +25,52 @@
   "main": "index.js",
   "type": "module",
   "types": "./types",
+  "files": [
+    "index.js",
+    "bare.js",
+    "src",
+    "types",
+    "examples",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build:types": "tsc",
     "lint": "standard",
-    "lint:fix": "standard --fix"
+    "lint:fix": "standard --fix",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+    "prepublishOnly": "npm run build:types"
   },
   "dependencies": {
     "@hinkal/common": "^0.3.1",
     "@tetherto/wdk-wallet-evm": "^1.0.0-beta.13",
+    "bare-node-runtime": "^1.5.0",
     "ethers": "^6.15.0",
     "viem": "^2.21.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
     "standard": "^17.1.2",
     "typescript": "^5.8.3"
   },
   "overrides": {
     "lodash": "npm:lodash-es@^4.18.1"
   },
+  "standard": {
+    "env": [
+      "jest"
+    ],
+    "ignore": [
+      "bare.js",
+      "tests/**/*.js"
+    ]
+  },
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
+      "bare": "./bare.js",
       "default": "./index.js"
     },
     "./package": {
