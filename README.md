@@ -26,19 +26,11 @@ Implements the [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wall
 npm install @hinkal/wdk-wallet-evm
 ```
 
-> Requires a bundler (Vite, webpack, or Metro) — `@hinkal/common` is not plain Node.js ESM compatible.
+> Requires a bundler (Vite, webpack, Metro, or Bare) — `@hinkal/common` is not plain Node.js ESM compatible.
 >
 > In browser environments, Hinkal's zero-knowledge proofs run in WebAssembly, so
 > the page's Content Security Policy must allow `'wasm-unsafe-eval'` under
 > `script-src` for the cryptographic operations to run.
->
-> **Bare runtime is not currently supported.** A `bare.js` entry point and the
-> `bare-node-runtime` mapping are provided, but loading fails: `snarkjs`
-> (a transitive dependency used by `@hinkal/common` for zero-knowledge proof
-> generation, via `fastfile`) reads Node's raw `fs` open-flag constants
-> (`O_CREAT` etc.) directly, which `bare-node-runtime` does not map to Bare's
-> filesystem model. This is upstream of this package and needs a fix in
-> `@hinkal/common`'s dependency chain, not in this module.
 
 ## Usage
 
@@ -77,13 +69,6 @@ Configuration is passed to the `WalletManagerEvmHinkal` constructor and forwarde
 | `retries`  | `number`             | `3`     | Failover provider retry count (when `provider` is a list). |
 
 Chain selection is implicit: operations run on the chain the configured `provider` is connected to.
-
-For anything beyond light testing, use an RPC endpoint from a provider such as
-Alchemy or Infura rather than a public RPC — these require your own API key
-(see `.env.example`) and are subject to that provider's rate limits and usage
-restrictions. Hinkal's own relayer and API are also subject to their own rate
-limits; see the [Hinkal docs](https://hinkal-team.gitbook.io/hinkal) for
-current limits.
 
 ## Supported networks
 

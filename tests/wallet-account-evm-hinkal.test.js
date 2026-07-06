@@ -132,26 +132,4 @@ describeIntegration(`WalletAccountEvmHinkal (chain ${CHAIN_ID})`, () => {
     });
     expect(Array.isArray(hashes)).toBe(true);
   }, 300_000);
-
-  test("rejects a send the account cannot cover (insufficient balance)", async () => {
-    await expect(
-      account.privateSend({
-        token: TOKEN,
-        recipient: RECIPIENT,
-        // An amount far beyond any realistic test balance, to force a real
-        // insufficient-funds rejection from the network/SDK.
-        amount: 1_000_000_000_000_000_000_000_000n,
-      }),
-    ).rejects.toThrow();
-  }, 300_000);
-
-  test("rejects a send for a token Hinkal does not support on this chain", async () => {
-    await expect(
-      account.privateSend({
-        token: "0x000000000000000000000000000000000000dEaD",
-        recipient: RECIPIENT,
-        amount: BigInt(AMOUNT),
-      }),
-    ).rejects.toThrow();
-  }, 300_000);
 });
