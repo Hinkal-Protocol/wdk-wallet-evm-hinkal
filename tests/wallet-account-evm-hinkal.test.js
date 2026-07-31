@@ -44,6 +44,53 @@ async function connectedAccount() {
   return wallet.getAccountByPath("0'/0/0");
 }
 
+const OFFLINE_SEED =
+  "test test test test test test test test test test test junk";
+
+describe("privateSend input validation", () => {
+  // Validation runs before any provider/SDK access, so no connection needed.
+  // Runs unconditionally (no .env required) so it always contributes coverage.
+  /** @type {WalletAccountEvmHinkal} */
+  let offline;
+
+  beforeAll(() => {
+    offline = new WalletAccountEvmHinkal(OFFLINE_SEED, "0'/0/0");
+  });
+
+  test("rejects a bad recipient", async () => {
+    await expect(
+      offline.privateSend({ token: "0x0", recipient: "nope", amount: 1n }),
+    ).rejects.toBeInstanceOf(InvalidRecipientError);
+  });
+
+  test("rejects a non-positive amount", async () => {
+    await expect(
+      offline.privateSend({
+        token: "0x0",
+        recipient: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        amount: 0n,
+      }),
+    ).rejects.toBeInstanceOf(InvalidAmountError);
+  });
+
+  test("rejects a malformed amount", async () => {
+    await expect(
+      offline.privateSend({
+        token: "0x0",
+        recipient: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        amount: "not-a-number",
+      }),
+    ).rejects.toBeInstanceOf(InvalidAmountError);
+  });
+});
+
+test("operations reject when the wallet is not connected to a provider", async () => {
+  const disconnected = new WalletAccountEvmHinkal(OFFLINE_SEED, "0'/0/0");
+  await expect(disconnected.stuckUtxoBalances()).rejects.toBeInstanceOf(
+    ProviderNotConnectedError,
+  );
+});
+
 describeIntegration(`WalletAccountEvmHinkal (chain ${CHAIN_ID})`, () => {
   /** @type {WalletAccountEvmHinkal} */
   let account;
@@ -61,40 +108,6 @@ describeIntegration(`WalletAccountEvmHinkal (chain ${CHAIN_ID})`, () => {
       // best-effort teardown; ignore
     }
     account?._provider?.destroy?.();
-  });
-
-  describe("privateSend input validation", () => {
-    // Validation runs before any provider/SDK access, so no connection needed.
-    const offline = new WalletAccountEvmHinkal(SEED, "0'/0/0");
-
-    test("rejects a bad recipient", async () => {
-      await expect(
-        offline.privateSend({ token: TOKEN, recipient: "nope", amount: 1n }),
-      ).rejects.toBeInstanceOf(InvalidRecipientError);
-    });
-
-    test("rejects a non-positive amount", async () => {
-      await expect(
-        offline.privateSend({ token: TOKEN, recipient: RECIPIENT, amount: 0n }),
-      ).rejects.toBeInstanceOf(InvalidAmountError);
-    });
-
-    test("rejects a malformed amount", async () => {
-      await expect(
-        offline.privateSend({
-          token: TOKEN,
-          recipient: RECIPIENT,
-          amount: "not-a-number",
-        }),
-      ).rejects.toBeInstanceOf(InvalidAmountError);
-    });
-  });
-
-  test("operations reject when the wallet is not connected to a provider", async () => {
-    const disconnected = new WalletAccountEvmHinkal(SEED, "0'/0/0");
-    await expect(disconnected.stuckUtxoBalances()).rejects.toBeInstanceOf(
-      ProviderNotConnectedError,
-    );
   });
 
   test("derives a valid EVM address", async () => {

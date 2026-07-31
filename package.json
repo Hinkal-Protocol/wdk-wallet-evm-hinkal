@@ -1,6 +1,6 @@
 {
   "name": "@hinkal/wdk-wallet-evm",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "WDK community module adding Hinkal private transfers to EVM wallet accounts.",
   "keywords": [
     "wdk",
@@ -43,7 +43,7 @@
     "prepublishOnly": "npm run build:types"
   },
   "dependencies": {
-    "@hinkal/common": "0.3.1",
+    "@hinkal/common": "0.3.2",
     "@tetherto/wdk-wallet-evm": "1.0.0-beta.13",
     "bare-node-runtime": "1.5.0",
     "ethers": "6.15.0",

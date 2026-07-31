@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-"use strict";
+'use strict'
 
 // The Hinkal SDK is not plain-ESM loadable in Node: its dependency graph mixes
 // CJS and ESM (@solana/web3.js -> rpc-websockets -> uuid, circomlibjs, ...).
@@ -21,9 +21,9 @@
 // UMD bundles that rely on a non-strict `this`/`self`; transpiling them breaks
 // their environment detection, so they are left untouched.
 module.exports = {
-  testEnvironment: "node",
-  setupFiles: ["<rootDir>/tests/setup.env.cjs"],
-  transform: { "^.+\\.(js|mjs|cjs)$": "babel-jest" },
-  transformIgnorePatterns: ["/node_modules/(libsodium|google-protobuf)"],
-  moduleNameMapper: { "^ethers$": require.resolve("ethers") },
-};
+  testEnvironment: 'node',
+  setupFiles: ['<rootDir>/tests/setup.env.cjs'],
+  transform: { '^.+\\.(js|mjs|cjs)$': 'babel-jest' },
+  transformIgnorePatterns: ['/node_modules/(libsodium|google-protobuf)'],
+  moduleNameMapper: { '^ethers$': require.resolve('ethers') }
+}

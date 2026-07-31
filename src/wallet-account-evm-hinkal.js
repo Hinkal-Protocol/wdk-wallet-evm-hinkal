@@ -26,12 +26,8 @@ import {
 } from './errors.js'
 
 /** @typedef {import('@tetherto/wdk-wallet-evm').EvmTransferOptions} EvmTransferOptions */
-
-/**
- * @typedef {Object} StuckUtxoBalance
- * @property {string} token - The token's address.
- * @property {bigint} balance - The recoverable shielded balance, in base units.
- */
+/** @typedef {import('./types.js').StuckUtxoBalance} StuckUtxoBalance */
+/** @typedef {import('./types.js').ScheduledTransactionStatus} ScheduledTransactionStatus */
 
 /**
  * An EVM wallet account with Hinkal private-transfer support.
@@ -120,7 +116,7 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * Returns the status of a scheduled private send.
    *
    * @param {string} scheduleId - The id returned by {@link privateSend}.
-   * @returns {Promise<import('@hinkal/common').ScheduledTransactionByIdResponse>} The send's status.
+   * @returns {Promise<ScheduledTransactionStatus>} The send's status.
    * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
    */
   async getSendStatus (scheduleId) {
@@ -141,7 +137,9 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
       this._chainId(),
       this.getAddress()
     ])
-    return { hashes: await hinkal.withdrawStuckUtxos(chainId, token, recipient) }
+    return {
+      hashes: await hinkal.withdrawStuckUtxos(chainId, token, recipient)
+    }
   }
 
   /**

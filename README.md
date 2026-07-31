@@ -18,7 +18,7 @@ All existing WDK wallet methods work unchanged.
 Implements the [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet/tree/main/src) `WalletManagerEvm` / `WalletAccountEvm` interface.
 
 - `@tetherto/wdk-wallet-evm`: `^1.0.0-beta.13`
-- `@hinkal/common`: `^0.3.1`
+- `@hinkal/common`: `^0.3.2`
 
 ## Installation
 
