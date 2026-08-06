@@ -9,6 +9,15 @@
  */
 export default class WalletAccountEvmHinkal extends WalletAccountEvm {
     /**
+     * Creates a new Hinkal-enabled EVM wallet account from a BIP-39 seed.
+     *
+     * @param {string | Uint8Array} seed - The wallet's BIP-39 seed phrase or seed bytes.
+     * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
+     * @param {import('@tetherto/wdk-wallet-evm').EvmWalletConfig} [config] - The configuration object.
+     */
+    constructor(seed: string | Uint8Array, path: string, config?: import("@tetherto/wdk-wallet-evm").EvmWalletConfig);
+    _hinkalSigner: HDNodeWallet;
+    /**
      * Returns the account's Hinkal session, creating it on first use.
      *
      * @private
@@ -75,3 +84,4 @@ export type EvmTransferOptions = import("@tetherto/wdk-wallet-evm").EvmTransferO
 export type StuckUtxoBalance = import("./types.js").StuckUtxoBalance;
 export type ScheduledTransactionStatus = import("./types.js").ScheduledTransactionStatus;
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm';
+import { HDNodeWallet } from 'ethers';

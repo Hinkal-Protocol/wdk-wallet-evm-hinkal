@@ -23,13 +23,21 @@ import WalletAccountEvmHinkal from './wallet-account-evm-hinkal.js'
  */
 export default class WalletManagerEvmHinkal extends WalletManagerEvm {
   /**
-   * Returns the Hinkal-enabled wallet account at a specific index.
+   * Creates a new Hinkal-enabled EVM wallet manager.
    *
-   * @param {number} [index] - The index of the account to get (default: 0).
-   * @returns {Promise<WalletAccountEvmHinkal>} The account.
+   * @param {string | Uint8Array} seedOrSigner - A BIP-39 seed phrase, seed bytes, or a root
+   *   signer. Only seeds/bytes are usable with Hinkal accounts — see {@link getAccountByPath}.
+   * @param {import('@tetherto/wdk-wallet-evm').EvmWalletConfig} [config] - The configuration object.
    */
-  async getAccount (index) {
-    return super.getAccount(index)
+  constructor (seedOrSigner, config = {}) {
+    super(seedOrSigner, config)
+
+    if (
+      typeof seedOrSigner === 'string' ||
+      seedOrSigner instanceof Uint8Array
+    ) {
+      this._hinkalSeed = seedOrSigner
+    }
   }
 
   /**
@@ -37,10 +45,20 @@ export default class WalletManagerEvmHinkal extends WalletManagerEvm {
    *
    * @param {string} path - The derivation path (e.g. "0'/0/0").
    * @returns {Promise<WalletAccountEvmHinkal>} The account.
+   * @throws {Error} If the manager was constructed with a pre-built signer instead of a seed.
    */
   async getAccountByPath (path) {
+    if (!this._hinkalSeed) {
+      throw new Error(
+        'WalletManagerEvmHinkal requires a BIP-39 seed (not a pre-built signer) to derive Hinkal-enabled accounts.'
+      )
+    }
     if (!this._accounts[path]) {
-      this._accounts[path] = new WalletAccountEvmHinkal(this.seed, path, this._config)
+      this._accounts[path] = new WalletAccountEvmHinkal(
+        this._hinkalSeed,
+        path,
+        this._config
+      )
     }
 
     return this._accounts[path]

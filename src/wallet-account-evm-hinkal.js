@@ -14,7 +14,8 @@
 
 'use strict'
 
-import { isAddress } from 'ethers'
+import * as bip39 from 'bip39'
+import { HDNodeWallet, isAddress } from 'ethers'
 
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 import { prepareEthersHinkal } from '@hinkal/common/providers/prepareEthersHinkal'
@@ -24,6 +25,8 @@ import {
   InvalidRecipientError,
   InvalidAmountError
 } from './errors.js'
+
+const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
 
 /** @typedef {import('@tetherto/wdk-wallet-evm').EvmTransferOptions} EvmTransferOptions */
 /** @typedef {import('./types.js').StuckUtxoBalance} StuckUtxoBalance */
@@ -37,6 +40,25 @@ import {
  */
 export default class WalletAccountEvmHinkal extends WalletAccountEvm {
   /**
+   * Creates a new Hinkal-enabled EVM wallet account from a BIP-39 seed.
+   *
+   * @param {string | Uint8Array} seed - The wallet's BIP-39 seed phrase or seed bytes.
+   * @param {string} path - The BIP-44 derivation path (e.g. "0'/0/0").
+   * @param {import('@tetherto/wdk-wallet-evm').EvmWalletConfig} [config] - The configuration object.
+   */
+  constructor (seed, path, config = {}) {
+    super(seed, path, config)
+
+    const seedBytes = typeof seed === 'string' ? bip39.mnemonicToSeedSync(seed) : seed
+    this._hinkalSigner = HDNodeWallet.fromSeed(seedBytes).derivePath(
+      `${BIP_44_ETH_DERIVATION_PATH_PREFIX}/${path}`
+    )
+    if (this._provider) {
+      this._hinkalSigner = this._hinkalSigner.connect(this._provider)
+    }
+  }
+
+  /**
    * Returns the account's Hinkal session, creating it on first use.
    *
    * @private
@@ -44,11 +66,11 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
    */
   async _prepareHinkal () {
-    if (!this._account.provider) {
+    if (!this._provider) {
       throw new ProviderNotConnectedError()
     }
     if (!this._hinkalSession) {
-      this._hinkalSession = prepareEthersHinkal(this._account)
+      this._hinkalSession = prepareEthersHinkal(this._hinkalSigner)
     }
     try {
       return await this._hinkalSession
@@ -66,7 +88,7 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
    * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
    */
   async _chainId () {
-    if (!this._account.provider) {
+    if (!this._provider) {
       throw new ProviderNotConnectedError()
     }
     const { chainId } = await this._provider.getNetwork()
