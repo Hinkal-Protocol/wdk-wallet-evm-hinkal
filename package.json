@@ -1,6 +1,6 @@
 {
   "name": "@hinkal/wdk-wallet-evm",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "WDK community module adding Hinkal private transfers to EVM wallet accounts.",
   "keywords": [
     "wdk",
