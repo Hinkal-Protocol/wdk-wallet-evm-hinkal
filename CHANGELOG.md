@@ -14,7 +14,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   abstraction), so `WalletAccountEvmHinkal` and `WalletManagerEvmHinkal` now
   independently derive their own ethers `HDNodeWallet` from the account's
   seed/path to keep calling `@hinkal/common`'s `prepareEthersHinkal`.
-- Bump `@hinkal/common` to `0.3.3`, resolving all npm audit vulnerabilities
+- Bump `@hinkal/common` to `0.3.4`, resolving all npm audit vulnerabilities
   (24 → 0) via dependency bumps and `overrides` for `underscore`/`ws` in the
   Solana/Tron dependency chain.
 - Fixed the "Built with WDK" README badge (was the wrong badge type/image).
