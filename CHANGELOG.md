@@ -4,6 +4,25 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] - 2026-08-11
+
+### Changed
+
+- Bump `@hinkal/common` from `0.3.4` to `0.3.6`. The SDK dropped two
+  dependencies it never referenced — `@solana/wallet-adapter-react` and
+  `uuid` — and pinned `bfj` to `7.0.2` and `bigint-buffer` to a patched fork.
+  Dropping `@solana/wallet-adapter-react` removes the entire `react-native`,
+  `metro`, and `@solana-mobile/*` subtree from installs, cutting production
+  dependencies roughly in half.
+- Add root `overrides` for `uuid` (`^11.1.1`) and `ws` (`^8.21.0`). Neither
+  advisory is reachable by upgrading: `jayson` requires `uuid@^8.3.2` and
+  `ethers@6.13.5` pins `ws@8.17.1` exactly, both excluding the fixed
+  versions. Overriding `ws` also clears the `ethers` and `tronweb` advisories,
+  which only flagged a vulnerable `ws`. With the SDK bump this takes
+  `npm audit` from 33 to 0 in this repository — note that npm honours
+  `overrides` only in the root project, so installs of this package do not
+  inherit them.
+
 ## [0.0.4] - 2026-08-06
 
 ### Changed

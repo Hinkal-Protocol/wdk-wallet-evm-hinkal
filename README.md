@@ -17,28 +17,11 @@ All existing WDK wallet methods work unchanged.
 
 Implements the [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet/tree/main/src) `WalletManagerEvm` / `WalletAccountEvm` interface.
 
-- `@tetherto/wdk-wallet-evm`: `^1.0.0-beta.16`
-- `@hinkal/common`: `^0.3.2`
-
 ## Installation
 
 ```sh
 npm install @hinkal/wdk-wallet-evm
 ```
-
-> Requires a bundler (Vite, webpack, or Metro) — `@hinkal/common` is not plain Node.js ESM compatible.
->
-> In browser environments, Hinkal's zero-knowledge proofs run in WebAssembly, so
-> the page's Content Security Policy must allow `'wasm-unsafe-eval'` under
-> `script-src` for the cryptographic operations to run.
->
-> **Bare runtime is not currently supported.** A `bare.js` entry point and the
-> `bare-node-runtime` mapping are provided, but loading fails: `snarkjs`
-> (a transitive dependency used by `@hinkal/common` for zero-knowledge proof
-> generation, via `fastfile`) reads Node's raw `fs` open-flag constants
-> (`O_CREAT` etc.) directly, which `bare-node-runtime` does not map to Bare's
-> filesystem model. This is upstream of this package and needs a fix in
-> `@hinkal/common`'s dependency chain, not in this module.
 
 ## Usage
 
@@ -135,7 +118,3 @@ themselves unless a `.env` provides the required vars — `SEED`, `RPC_URL`,
 - Discord: <https://discord.com/invite/xYGJTJbZy7>
 - Issues: <https://github.com/Hinkal-Protocol/wdk-wallet-evm-hinkal/issues>
 - Security disclosures: see [SECURITY.md](./SECURITY.md)
-
-## License
-
-Apache-2.0
