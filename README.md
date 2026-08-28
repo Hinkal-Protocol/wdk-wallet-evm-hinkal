@@ -48,6 +48,17 @@ const balances = await account.stuckUtxoBalances();
 const { hashes } = await account.withdrawStuckUtxos({ token: "0x..." });
 ```
 
+Accounts can also be fetched by derivation path:
+
+```js
+const account = await wallet.getAccountByPath("0'/0/0");
+```
+
+Call `account.dispose()` when finished to clear the account's key material.
+
+The manager accepts only a seed, so `getAccount` and `getAccountByPath` reject
+the `signerName` option with `InvalidSignerError`.
+
 See [`examples/`](./examples) for a runnable script.
 
 ## Configuration
@@ -122,31 +133,10 @@ unsupported token) propagate as-is.
 
 ## Runtime support
 
-**This package does not work under [Bare](https://github.com/holepunchto/bare),
-and does not work under plain Node.js without a browser-like environment.**
-
-`@hinkal/common` ships a bundle that is browser-oriented. Importing
-`@hinkal/common/providers/prepareEthersHinkal` from an ESM context fails at load
-time:
-
-```
-Calling `require` for "path" in an environment that doesn't expose the `require`
-function.
-```
-
-The bundle emits CommonJS `require` calls for Node built-ins (`path`, and an
-IndexedDB-backed key-value store gated on `globalThis.indexedDB`) inside ESM
-output. Neither Node.js ESM nor Bare provides those, so the failure is an
-import-time crash rather than a runtime fallback. Its worker layer also expects
-browser Web Workers.
-
-This package's tests pass because Jest supplies a DOM-like global environment.
-That is not evidence of Node or Bare support.
-
-Use it in a browser, or in a host that provides `indexedDB` and Web Workers.
-`bare-node-runtime` is declared for parity with `@tetherto/wdk-wallet-evm`; it is
-not a compatibility claim, and Bare support would require changes in
-`@hinkal/common` rather than here.
+Not compatible with [Bare](https://github.com/holepunchto/bare): `snarkjs`,
+used by `@hinkal/common` for proof generation, imports `O_CREAT` from Node's
+`constants` module, which `bare-node-runtime` does not provide. Verified with
+Bare v1.30.3.
 
 ## Testing
 
