@@ -15,6 +15,7 @@
 'use strict'
 
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { InvalidSignerError } from '@tetherto/wdk-wallet'
 
 import WalletAccountEvmHinkal from './wallet-account-evm-hinkal.js'
 
@@ -25,34 +26,68 @@ export default class WalletManagerEvmHinkal extends WalletManagerEvm {
   /**
    * Creates a new Hinkal-enabled EVM wallet manager.
    *
-   * @param {string | Uint8Array} seedOrSigner - A BIP-39 seed phrase, seed bytes, or a root
-   *   signer. Only seeds/bytes are usable with Hinkal accounts — see {@link getAccountByPath}.
+   * Hinkal derives its shielded keys from the wallet's seed, so this manager accepts
+   * only a seed. Pre-built signers (including hardware signers) cannot back a Hinkal
+   * account and are rejected here rather than at first account access.
+   *
+   * @param {string | Uint8Array} seed - A BIP-39 seed phrase or seed bytes.
    * @param {import('@tetherto/wdk-wallet-evm').EvmWalletConfig} [config] - The configuration object.
+   * @throws {InvalidSignerError} If given a signer instead of a seed.
    */
-  constructor (seedOrSigner, config = {}) {
-    super(seedOrSigner, config)
-
-    if (
-      typeof seedOrSigner === 'string' ||
-      seedOrSigner instanceof Uint8Array
-    ) {
-      this._hinkalSeed = seedOrSigner
+  constructor (seed, config = {}) {
+    if (typeof seed !== 'string' && !(seed instanceof Uint8Array)) {
+      throw new InvalidSignerError(
+        'WalletManagerEvmHinkal requires a BIP-39 seed phrase or seed bytes; pre-built signers are not supported because Hinkal derives its shielded keys from the seed.'
+      )
     }
+
+    super(seed, config)
+
+    this._hinkalSeed = seed
+  }
+
+  /**
+   * Returns the Hinkal-enabled wallet account at an index.
+   *
+   * Overridden so that every account is a {@link WalletAccountEvmHinkal}. The base
+   * implementation builds a plain account when given a signer name, which would
+   * silently drop Hinkal support.
+   *
+   * @param {number} index - The account index.
+   * @param {Object} [options] - Account options.
+   * @returns {Promise<WalletAccountEvmHinkal>} The account.
+   * @throws {InvalidSignerError} If a signer name is supplied.
+   */
+  async getAccount (index = 0, options = {}) {
+    if (typeof index === 'string') {
+      throw new InvalidSignerError(
+        `WalletManagerEvmHinkal has no named signers; got '${index}'. Hinkal accounts are always derived from the manager's seed.`
+      )
+    }
+    if (options.signerName !== undefined) {
+      throw new InvalidSignerError(
+        `WalletManagerEvmHinkal does not support the 'signerName' option (got '${options.signerName}'). Hinkal accounts are always derived from the manager's seed.`
+      )
+    }
+
+    return this.getAccountByPath(`${index}'/0/0`)
   }
 
   /**
    * Returns the Hinkal-enabled wallet account at a specific BIP-44 derivation path.
    *
    * @param {string} path - The derivation path (e.g. "0'/0/0").
+   * @param {Object} [options] - Account options.
    * @returns {Promise<WalletAccountEvmHinkal>} The account.
-   * @throws {Error} If the manager was constructed with a pre-built signer instead of a seed.
+   * @throws {InvalidSignerError} If a signer name is supplied.
    */
-  async getAccountByPath (path) {
-    if (!this._hinkalSeed) {
-      throw new Error(
-        'WalletManagerEvmHinkal requires a BIP-39 seed (not a pre-built signer) to derive Hinkal-enabled accounts.'
+  async getAccountByPath (path, options = {}) {
+    if (options.signerName !== undefined) {
+      throw new InvalidSignerError(
+        `WalletManagerEvmHinkal does not support the 'signerName' option (got '${options.signerName}'). Hinkal accounts are always derived from the manager's seed.`
       )
     }
+
     if (!this._accounts[path]) {
       this._accounts[path] = new WalletAccountEvmHinkal(
         this._hinkalSeed,

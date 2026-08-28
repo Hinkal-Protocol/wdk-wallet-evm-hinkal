@@ -16,8 +16,8 @@
 
 import WalletManagerEvmHinkal from "../src/wallet-manager-evm-hinkal.js";
 import WalletAccountEvmHinkal from "../src/wallet-account-evm-hinkal.js";
+import { ProviderRequiredError } from "@tetherto/wdk-wallet";
 import {
-  ProviderNotConnectedError,
   InvalidRecipientError,
   InvalidAmountError,
 } from "../src/errors.js";
@@ -87,7 +87,7 @@ describe("privateSend input validation", () => {
 test("operations reject when the wallet is not connected to a provider", async () => {
   const disconnected = new WalletAccountEvmHinkal(OFFLINE_SEED, "0'/0/0");
   await expect(disconnected.stuckUtxoBalances()).rejects.toBeInstanceOf(
-    ProviderNotConnectedError,
+    ProviderRequiredError,
   );
 });
 

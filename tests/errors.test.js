@@ -14,22 +14,23 @@
 
 "use strict";
 
+import { WdkError } from "@tetherto/wdk-wallet";
+
 import {
   HinkalError,
-  ProviderNotConnectedError,
   InvalidRecipientError,
   InvalidAmountError,
 } from "../src/errors.js";
 
 describe("errors", () => {
-  test("every error extends HinkalError and Error", () => {
+  test("every error extends HinkalError, WdkError, and Error", () => {
     const errors = [
-      new ProviderNotConnectedError(),
       new InvalidRecipientError("0x0"),
       new InvalidAmountError(0n),
     ];
     for (const err of errors) {
       expect(err).toBeInstanceOf(Error);
+      expect(err).toBeInstanceOf(WdkError);
       expect(err).toBeInstanceOf(HinkalError);
     }
   });
@@ -37,19 +38,13 @@ describe("errors", () => {
   test("flags user-actionable vs developer errors", () => {
     expect(new InvalidRecipientError("0x0").isUserActionable).toBe(true);
     expect(new InvalidAmountError(0n).isUserActionable).toBe(true);
-    expect(new ProviderNotConnectedError().isUserActionable).toBe(false);
+    expect(new HinkalError("boom").isUserActionable).toBe(false);
   });
 
   test("HinkalError carries its message and name", () => {
     const err = new HinkalError("boom");
     expect(err.name).toBe("HinkalError");
     expect(err.message).toBe("boom");
-  });
-
-  test("ProviderNotConnectedError has a stable name and message", () => {
-    const err = new ProviderNotConnectedError();
-    expect(err.name).toBe("ProviderNotConnectedError");
-    expect(err.message).toMatch(/connected to a provider/);
   });
 
   test("InvalidRecipientError keeps the offending recipient", () => {

@@ -20,7 +20,13 @@ export { default as WalletAccountEvmHinkal } from './src/wallet-account-evm-hink
 
 export {
   HinkalError,
-  ProviderNotConnectedError,
   InvalidRecipientError,
   InvalidAmountError
 } from './src/errors.js'
+
+// Re-exported for convenience: thrown by this package's public methods.
+export {
+  WdkError,
+  InvalidSignerError,
+  ProviderRequiredError
+} from '@tetherto/wdk-wallet'

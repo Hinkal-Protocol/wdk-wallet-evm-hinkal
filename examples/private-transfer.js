@@ -25,7 +25,7 @@
 
 'use strict'
 
-import WalletManagerEvmHinkal, { HinkalError } from '@hinkal/wdk-wallet-evm'
+import WalletManagerEvmHinkal, { HinkalError } from '@hinkal/wdk-wallet-evm-hinkal'
 
 const {
   SEED,

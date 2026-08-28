@@ -14,35 +14,27 @@
 
 'use strict'
 
+import { WdkError } from '@tetherto/wdk-wallet'
+
 /**
  * Base class for every error thrown by this module. Catch this to handle all
- * Hinkal-specific failures without catching unrelated errors.
+ * Hinkal-specific failures without catching unrelated errors. Extends WDK's
+ * `WdkError`, so `catch (e) { if (e instanceof WdkError) ... }` also catches these.
  *
  * `isUserActionable` distinguishes errors a wallet UI should surface to the end
  * user (bad input) from developer errors (misconfiguration).
  */
-export class HinkalError extends Error {
+export class HinkalError extends WdkError {
   /**
    * @param {string} message - The error's message.
    * @param {boolean} [isUserActionable] - Whether an end user can act on it.
+   * @param {ErrorOptions} [options] - The error's options, forwarded to `WdkError`.
    */
-  constructor (message, isUserActionable = false) {
-    super(message)
+  constructor (message, isUserActionable = false, options) {
+    super(message, options)
 
     this.name = 'HinkalError'
     this.isUserActionable = isUserActionable
-  }
-}
-
-/**
- * Thrown when an operation needs a provider but the wallet is not connected to
- * one. Developer-actionable: connect the wallet to a provider first.
- */
-export class ProviderNotConnectedError extends HinkalError {
-  constructor () {
-    super('The wallet must be connected to a provider.', false)
-
-    this.name = 'ProviderNotConnectedError'
   }
 }
 

@@ -14,6 +14,8 @@
 
 "use strict";
 
+import { InvalidSignerError } from "@tetherto/wdk-wallet";
+
 import WalletManagerEvmHinkal from "../src/wallet-manager-evm-hinkal.js";
 import WalletAccountEvmHinkal from "../src/wallet-account-evm-hinkal.js";
 
@@ -44,5 +46,36 @@ describe("WalletManagerEvmHinkal", () => {
     const a = await wallet.getAccountByPath("0'/0/0");
     const b = await wallet.getAccountByPath("0'/0/1");
     expect(a).not.toBe(b);
+  });
+
+  test("rejects a pre-built signer at construction", () => {
+    const signer = { getAddress: async () => "0x0", signTransaction: async () => "0x" };
+    expect(() => new WalletManagerEvmHinkal(signer)).toThrow(InvalidSignerError);
+  });
+
+  test("rejects a signer name passed to getAccount", async () => {
+    const wallet = new WalletManagerEvmHinkal(TEST_SEED);
+    await expect(wallet.getAccount("hw")).rejects.toBeInstanceOf(InvalidSignerError);
+    await expect(
+      wallet.getAccount(0, { signerName: "hw" }),
+    ).rejects.toBeInstanceOf(InvalidSignerError);
+  });
+
+  test("rejects a signer name passed to getAccountByPath", async () => {
+    const wallet = new WalletManagerEvmHinkal(TEST_SEED);
+    await expect(
+      wallet.getAccountByPath("0'/0/0", { signerName: "hw" }),
+    ).rejects.toBeInstanceOf(InvalidSignerError);
+  });
+
+  test("dispose clears the account's Hinkal signer and session", async () => {
+    const wallet = new WalletManagerEvmHinkal(TEST_SEED);
+    const account = await wallet.getAccountByPath("0'/0/0");
+    expect(account._hinkalSigner).toBeDefined();
+
+    account.dispose();
+
+    expect(account._hinkalSigner).toBeUndefined();
+    expect(account._hinkalSession).toBeUndefined();
   });
 });

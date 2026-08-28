@@ -22,7 +22,7 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
      *
      * @private
      * @returns {Promise<import('@hinkal/common').Hinkal<unknown>>}
-     * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
+     * @throws {ProviderRequiredError} If the wallet is not connected to a provider.
      */
     private _prepareHinkal;
     _hinkalSession: Promise<import("@hinkal/common").Hinkal<unknown>>;
@@ -31,7 +31,7 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
      *
      * @private
      * @returns {Promise<number>}
-     * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
+     * @throws {ProviderRequiredError} If the wallet is not connected to a provider.
      */
     private _chainId;
     /**
@@ -41,12 +41,21 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
      * withdrawal to the recipient settles afterwards. Use `scheduleId` with
      * {@link getSendStatus} to track that withdrawal.
      *
+     * Fee caps are not enforced. The `transactionMaxFee` and `transferMaxFee` config
+     * options apply to {@link sendTransaction} and {@link transfer}, which quote a
+     * transaction before sending it. Hinkal builds, signs, and submits the deposit
+     * inside `depositAndWithdraw`, and the SDK exposes no pre-flight quote, so there
+     * is no cost to compare against a cap before the funds move. The relayer's own
+     * fee is separate again and is taken from the shielded amount. Callers that need
+     * a ceiling should check {@link quoteSendTransaction} against their own limit, or
+     * constrain the amount they pass here.
+     *
      * @param {EvmTransferOptions} options - The transfer's options (`amount` in base units).
      * @returns {Promise<{ depositTxHash: string, scheduleId: string }>} The deposit
      *   transaction's hash and the scheduled send's id.
      * @throws {InvalidRecipientError} If the recipient address is invalid.
      * @throws {InvalidAmountError} If the amount is not positive.
-     * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
+     * @throws {ProviderRequiredError} If the wallet is not connected to a provider.
      */
     privateSend({ token, recipient, amount }: EvmTransferOptions): Promise<{
         depositTxHash: string;
@@ -57,7 +66,7 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
      *
      * @param {string} scheduleId - The id returned by {@link privateSend}.
      * @returns {Promise<ScheduledTransactionStatus>} The send's status.
-     * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
+     * @throws {ProviderRequiredError} If the wallet is not connected to a provider.
      */
     getSendStatus(scheduleId: string): Promise<ScheduledTransactionStatus>;
     /**
@@ -65,7 +74,7 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
      *
      * @param {{ token: string }} options - The options (only `token` is used).
      * @returns {Promise<{ hashes: string[] }>} The withdrawal transactions' hashes.
-     * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
+     * @throws {ProviderRequiredError} If the wallet is not connected to a provider.
      */
     withdrawStuckUtxos({ token }: {
         token: string;
@@ -76,7 +85,7 @@ export default class WalletAccountEvmHinkal extends WalletAccountEvm {
      * Returns this account's stuck Hinkal shielded balances (UTXOs awaiting recovery).
      *
      * @returns {Promise<StuckUtxoBalance[]>} The stuck balance per token.
-     * @throws {ProviderNotConnectedError} If the wallet is not connected to a provider.
+     * @throws {ProviderRequiredError} If the wallet is not connected to a provider.
      */
     stuckUtxoBalances(): Promise<StuckUtxoBalance[]>;
 }
