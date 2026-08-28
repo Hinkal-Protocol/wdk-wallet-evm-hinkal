@@ -122,12 +122,31 @@ unsupported token) propagate as-is.
 
 ## Runtime support
 
-Tested on Node.js. Not verified under [Bare](https://github.com/holepunchto/bare):
-`@hinkal/common` reaches for `fs`, `crypto`, `worker_threads`, and
-`child_process`, and pulls in `bfj` and `dotenv`, so proof generation and the
-relayer client are unlikely to work under Bare without shims. `bare-node-runtime`
-is declared for parity with `@tetherto/wdk-wallet-evm`, not as a compatibility
-claim. Treat Bare support as unverified until it is exercised end to end.
+**This package does not work under [Bare](https://github.com/holepunchto/bare),
+and does not work under plain Node.js without a browser-like environment.**
+
+`@hinkal/common` ships a bundle that is browser-oriented. Importing
+`@hinkal/common/providers/prepareEthersHinkal` from an ESM context fails at load
+time:
+
+```
+Calling `require` for "path" in an environment that doesn't expose the `require`
+function.
+```
+
+The bundle emits CommonJS `require` calls for Node built-ins (`path`, and an
+IndexedDB-backed key-value store gated on `globalThis.indexedDB`) inside ESM
+output. Neither Node.js ESM nor Bare provides those, so the failure is an
+import-time crash rather than a runtime fallback. Its worker layer also expects
+browser Web Workers.
+
+This package's tests pass because Jest supplies a DOM-like global environment.
+That is not evidence of Node or Bare support.
+
+Use it in a browser, or in a host that provides `indexedDB` and Web Workers.
+`bare-node-runtime` is declared for parity with `@tetherto/wdk-wallet-evm`; it is
+not a compatibility claim, and Bare support would require changes in
+`@hinkal/common` rather than here.
 
 ## Testing
 
