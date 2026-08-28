@@ -1,0 +1,85 @@
+{
+  "name": "@hinkal/wdk-wallet-evm",
+  "version": "0.0.6",
+  "description": "WDK community module adding Hinkal private transfers to EVM wallet accounts.",
+  "keywords": [
+    "wdk",
+    "wallet",
+    "evm",
+    "hinkal",
+    "privacy",
+    "wdk-hinkal",
+    "private-transfer",
+    "shielded"
+  ],
+  "license": "Apache-2.0",
+  "author": "Hinkal <support@hinkal.pro>",
+  "homepage": "https://hinkal.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hinkal-Protocol/wdk-wallet-evm-hinkal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hinkal-Protocol/wdk-wallet-evm-hinkal/issues"
+  },
+  "main": "index.js",
+  "type": "module",
+  "types": "./types",
+  "files": [
+    "index.js",
+    "bare.js",
+    "src",
+    "types",
+    "examples",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build:types": "tsc",
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "test": "jest --runInBand",
+    "test:coverage": "jest --coverage --runInBand",
+    "prepublishOnly": "npm run build:types"
+  },
+  "dependencies": {
+    "@hinkal/common": "0.3.8",
+    "@tetherto/wdk-wallet-evm": "1.0.0-beta.16",
+    "bare-node-runtime": "1.5.0",
+    "bip39": "3.1.0",
+    "ethers": "6.17.0",
+    "viem": "2.54.2"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "7.29.7",
+    "cross-env": "7.0.3",
+    "dotenv": "16.6.1",
+    "jest": "29.7.0",
+    "standard": "17.1.2",
+    "typescript": "5.8.3"
+  },
+  "overrides": {
+    "lodash": "npm:lodash-es@^4.18.1",
+    "uuid": "^11.1.1",
+    "ws": "^8.21.0"
+  },
+  "standard": {
+    "env": [
+      "jest"
+    ],
+    "ignore": [
+      "bare.js",
+      "tests/**/*.js"
+    ]
+  },
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "bare": "./bare.js",
+      "default": "./index.js"
+    },
+    "./package": {
+      "default": "./package.json"
+    }
+  }
+}
