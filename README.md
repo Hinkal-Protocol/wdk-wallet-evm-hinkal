@@ -1,4 +1,4 @@
-# @hinkal/wdk-wallet-evm-hinkal-hinkal
+# @hinkal/wdk-wallet-evm-hinkal
 
 [![Built with WDK](https://raw.githubusercontent.com/Hinkal-Protocol/wdk-wallet-evm-hinkal/main/assets/built-with-wdk.svg)](https://docs.wdk.tether.io)
 
@@ -20,7 +20,7 @@ Implements the [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wall
 ## Installation
 
 ```sh
-npm install @hinkal/wdk-wallet-evm-hinkal-hinkal
+npm install @hinkal/wdk-wallet-evm-hinkal
 ```
 
 ## Usage
