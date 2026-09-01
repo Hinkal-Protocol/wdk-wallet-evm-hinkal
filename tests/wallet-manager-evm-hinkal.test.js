@@ -15,6 +15,7 @@
 "use strict";
 
 import { InvalidSignerError } from "@tetherto/wdk-wallet";
+import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
 
 import WalletManagerEvmHinkal from "../src/wallet-manager-evm-hinkal.js";
 import WalletAccountEvmHinkal from "../src/wallet-account-evm-hinkal.js";
@@ -49,13 +50,20 @@ describe("WalletManagerEvmHinkal", () => {
   });
 
   test("rejects a pre-built signer at construction", () => {
-    const signer = { getAddress: async () => "0x0", signTransaction: async () => "0x" };
-    expect(() => new WalletManagerEvmHinkal(signer)).toThrow(InvalidSignerError);
+    const signer = {
+      getAddress: async () => "0x0",
+      signTransaction: async () => "0x",
+    };
+    expect(() => new WalletManagerEvmHinkal(signer)).toThrow(
+      InvalidSignerError,
+    );
   });
 
   test("rejects a signer name passed to getAccount", async () => {
     const wallet = new WalletManagerEvmHinkal(TEST_SEED);
-    await expect(wallet.getAccount("hw")).rejects.toBeInstanceOf(InvalidSignerError);
+    await expect(wallet.getAccount("hw")).rejects.toBeInstanceOf(
+      InvalidSignerError,
+    );
     await expect(
       wallet.getAccount(0, { signerName: "hw" }),
     ).rejects.toBeInstanceOf(InvalidSignerError);
@@ -77,5 +85,15 @@ describe("WalletManagerEvmHinkal", () => {
 
     expect(account._hinkalSigner).toBeUndefined();
     expect(account._hinkalSession).toBeUndefined();
+  });
+
+  test("getAccount uses the same derivation path as WDK", async () => {
+    const ours = new WalletManagerEvmHinkal(TEST_SEED);
+    const base = new WalletManagerEvm(TEST_SEED);
+    for (const index of [0, 1, 2]) {
+      const account = await ours.getAccount(index);
+      const baseAccount = await base.getAccount(index);
+      expect(await account.getAddress()).toBe(await baseAccount.getAddress());
+    }
   });
 });

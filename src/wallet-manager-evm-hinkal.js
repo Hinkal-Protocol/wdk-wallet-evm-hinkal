@@ -71,7 +71,7 @@ export default class WalletManagerEvmHinkal extends WalletManagerEvm {
       );
     }
 
-    return this.getAccountByPath(`${index}'/0/0`);
+    return this.getAccountByPath(`0'/0/${index}`);
   }
 
   /**

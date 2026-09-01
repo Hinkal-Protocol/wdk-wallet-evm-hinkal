@@ -117,13 +117,13 @@ try {
 }
 ```
 
-| Error                   | User-actionable | Thrown when                                                          |
-| ----------------------- | :-------------: | -------------------------------------------------------------------- |
-| `InvalidRecipientError` |       yes       | `privateSend` receives an invalid recipient address.                 |
-| `InvalidAmountError`    |       yes       | `privateSend` receives a non-positive amount.                        |
-| `HinkalError`           |        —        | Base class for this module's errors; extends `WdkError`.             |
-| `ProviderRequiredError` |        —        | An operation runs while the wallet is not connected to a provider.   |
-| `InvalidSignerError`    |        —        | The manager is given a signer instead of a seed, or a `signerName`.  |
+| Error                   | User-actionable | Thrown when                                                         |
+| ----------------------- | :-------------: | ------------------------------------------------------------------- |
+| `InvalidRecipientError` |       yes       | `privateSend` receives an invalid recipient address.                |
+| `InvalidAmountError`    |       yes       | `privateSend` receives a non-positive amount.                       |
+| `HinkalError`           |        —        | Base class for this module's errors; extends `WdkError`.            |
+| `ProviderRequiredError` |        —        | An operation runs while the wallet is not connected to a provider.  |
+| `InvalidSignerError`    |        —        | The manager is given a signer instead of a seed, or a `signerName`. |
 
 `ProviderRequiredError` and `InvalidSignerError` come from
 `@tetherto/wdk-wallet` and are re-exported here for convenience.
@@ -133,10 +133,16 @@ unsupported token) propagate as-is.
 
 ## Runtime support
 
-Not compatible with [Bare](https://github.com/holepunchto/bare): `snarkjs`,
-used by `@hinkal/common` for proof generation, imports `O_CREAT` from Node's
-`constants` module, which `bare-node-runtime` does not provide. Verified with
-Bare v1.30.3.
+Not compatible with [Bare](https://github.com/holepunchto/bare). Verified
+against Bare v1.30.3: a private transfer fails with `expected signer`.
+
+`ethers` has no `bare` export condition, so under Bare this package resolves it
+to its ESM build while `@hinkal/common` resolves to CommonJS. Two module
+instances mean two `AbstractSigner` classes, and the SDK's
+`runner instanceof AbstractSigner` check fails. Node is unaffected: both sides
+resolve through the same `import` condition. Adding
+`"bare": "./lib.commonjs/index.js"` to `ethers`' export conditions resolves it,
+which is a change upstream of this package.
 
 ## Testing
 
