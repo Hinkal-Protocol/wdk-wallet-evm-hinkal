@@ -12,6 +12,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `@hinkal/wdk-wallet-evm`, read as a replacement for `@tetherto/wdk-wallet-evm`
   rather than an extension of it, and did not follow WDK's `wdk-wallet-<chain>-<variant>`
   convention. Update imports accordingly.
+- Bump `@hinkal/common` from `0.3.8` to `0.3.10`.
 - Bump `@tetherto/wdk-wallet-evm` from `1.0.0-beta.16` to `1.0.0-beta.18`, which
   introduces WDK's typed error hierarchy.
 - Add `@tetherto/wdk-wallet` as a direct dependency. Its error classes are used
@@ -23,6 +24,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   immediately.
 - `HinkalError` extends WDK's `WdkError` instead of `Error`, so callers can catch
   every WDK error uniformly.
+
+### Fixed
+
+- `getAccount(index)` derived `${index}'/0/0` instead of `0'/0/${index}`, so it
+  varied the BIP-44 account level where `WalletManagerEvm` varies the address
+  index. The two agree at index 0 and diverge above it, so `getAccount(1)` and
+  higher returned a different address than the same call on the base manager.
 
 ### Removed
 
@@ -44,8 +52,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Document that `transactionMaxFee` and `transferMaxFee` do not apply to
   `privateSend`: the SDK builds and submits the deposit internally and exposes no
   pre-flight quote, so no cost can be compared against a cap before funds move.
-- Document that Bare compatibility is unverified. `@hinkal/common` uses `fs`,
-  `crypto`, `worker_threads`, and `child_process`.
+- Document that the package is not compatible with Bare. `ethers` ships no
+  `bare` export condition, so under Bare this package resolves it to its ESM
+  build while `@hinkal/common` resolves to CommonJS; the two `AbstractSigner`
+  classes make the SDK's signer check fail with `expected signer`.
 - Fix the `@tetherto/wdk-wallet-evm` interface link, which pointed at the
   `wdk-wallet` repository.
 
