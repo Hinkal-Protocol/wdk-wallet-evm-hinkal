@@ -13,6 +13,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   rather than an extension of it, and did not follow WDK's `wdk-wallet-<chain>-<variant>`
   convention. Update imports accordingly.
 - Bump `@hinkal/common` from `0.3.8` to `0.3.10`.
+- Add root `overrides` for `toml` (`^5.0.0`) and `stream-json` (`^3.6.0`).
+  `0.3.10` pulls both in transitively — `toml` through `@coral-xyz/anchor` and
+  `stream-json` through `jayson` — at versions carrying a prototype-pollution
+  and an uncontrolled-recursion advisory (`toml`) and a quadratic-filter
+  advisory (`stream-json`). Overriding them takes `npm audit` back to 0.
+- Drop the unused `viem` dependency. Nothing in this package imported it.
 - Bump `@tetherto/wdk-wallet-evm` from `1.0.0-beta.16` to `1.0.0-beta.18`, which
   introduces WDK's typed error hierarchy.
 - Add `@tetherto/wdk-wallet` as a direct dependency. Its error classes are used
