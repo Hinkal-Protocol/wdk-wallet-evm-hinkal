@@ -61,10 +61,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Document that `transactionMaxFee` and `transferMaxFee` do not apply to
   `privateSend`: the SDK builds and submits the deposit internally and exposes no
   pre-flight quote, so no cost can be compared against a cap before funds move.
-- Document that the package is not compatible with Bare. `ethers` ships no
-  `bare` export condition, so under Bare this package resolves it to its ESM
-  build while `@hinkal/common` resolves to CommonJS; the two `AbstractSigner`
-  classes make the SDK's signer check fail with `expected signer`.
+- Document Bare support, verified against Bare v1.30.3 on Base mainnet: private
+  sends, stuck-UTXO balances, and stuck-UTXO recovery all complete.
 - Fix the `@tetherto/wdk-wallet-evm` interface link, which pointed at the
   `wdk-wallet` repository.
 
