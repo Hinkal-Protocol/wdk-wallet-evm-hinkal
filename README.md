@@ -133,16 +133,16 @@ unsupported token) propagate as-is.
 
 ## Runtime support
 
-Not compatible with [Bare](https://github.com/holepunchto/bare). Verified
-against Bare v1.30.3: a private transfer fails with `expected signer`.
+Node.js and [Bare](https://github.com/holepunchto/bare). Under Bare, import the
+package's `bare` entry point, which Bare selects automatically:
 
-`ethers` has no `bare` export condition, so under Bare this package resolves it
-to its ESM build while `@hinkal/common` resolves to CommonJS. Two module
-instances mean two `AbstractSigner` classes, and the SDK's
-`runner instanceof AbstractSigner` check fails. Node is unaffected: both sides
-resolve through the same `import` condition. Adding
-`"bare": "./lib.commonjs/index.js"` to `ethers`' export conditions resolves it,
-which is a change upstream of this package.
+```js
+import WalletManagerEvmHinkal from "@hinkal/wdk-wallet-evm-hinkal";
+```
+
+Verified against Bare v1.30.3 on Base mainnet: private sends, stuck-UTXO
+balances, and stuck-UTXO recovery all complete. Requires `@hinkal/common`
+`0.3.13` or later.
 
 ## Testing
 

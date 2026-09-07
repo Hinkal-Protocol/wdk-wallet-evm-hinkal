@@ -12,9 +12,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `@hinkal/wdk-wallet-evm`, read as a replacement for `@tetherto/wdk-wallet-evm`
   rather than an extension of it, and did not follow WDK's `wdk-wallet-<chain>-<variant>`
   convention. Update imports accordingly.
-- Bump `@hinkal/common` from `0.3.8` to `0.3.10`.
+- Bump `@hinkal/common` from `0.3.8` to `0.3.13`, which makes this package work
+  under Bare: the SDK now resolves to its CommonJS build there and checks
+  signers structurally, so the consumer and the SDK no longer end up with
+  separate `ethers` module instances failing an `instanceof` check.
 - Add root `overrides` for `toml` (`^5.0.0`) and `stream-json` (`^3.6.0`).
-  `0.3.10` pulls both in transitively — `toml` through `@coral-xyz/anchor` and
+  `@hinkal/common` pulls both in transitively — `toml` through `@coral-xyz/anchor` and
   `stream-json` through `jayson` — at versions carrying a prototype-pollution
   and an uncontrolled-recursion advisory (`toml`) and a quadratic-filter
   advisory (`stream-json`). Overriding them takes `npm audit` back to 0.

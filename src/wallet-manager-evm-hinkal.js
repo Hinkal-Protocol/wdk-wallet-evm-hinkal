@@ -54,8 +54,8 @@ export default class WalletManagerEvmHinkal extends WalletManagerEvm {
    * implementation builds a plain account when given a signer name, which would
    * silently drop Hinkal support.
    *
-   * @param {number} index - The account index.
-   * @param {Object} [options] - Account options.
+   * @param {number | string} [index] - The account index.
+   * @param {{ signerName?: string }} [options] - Account options.
    * @returns {Promise<WalletAccountEvmHinkal>} The account.
    * @throws {InvalidSignerError} If a signer name is supplied.
    */
