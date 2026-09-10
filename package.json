@@ -32,7 +32,8 @@
     "types",
     "examples",
     "SECURITY.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    ".env.example"
   ],
   "scripts": {
     "build:types": "tsc",
