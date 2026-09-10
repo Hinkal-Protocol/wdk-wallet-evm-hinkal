@@ -4,6 +4,68 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.7] - 2026-08-28
+
+### Changed
+
+- **Renamed the package to `@hinkal/wdk-wallet-evm-hinkal`.** The previous name,
+  `@hinkal/wdk-wallet-evm`, read as a replacement for `@tetherto/wdk-wallet-evm`
+  rather than an extension of it, and did not follow WDK's `wdk-wallet-<chain>-<variant>`
+  convention. Update imports accordingly.
+- Bump `@hinkal/common` from `0.3.8` to `0.3.13`, which makes this package work
+  under Bare: the SDK now resolves to its CommonJS build there and checks
+  signers structurally, so the consumer and the SDK no longer end up with
+  separate `ethers` module instances failing an `instanceof` check.
+- Add root `overrides` for `toml` (`^5.0.0`) and `stream-json` (`^3.6.0`).
+  `@hinkal/common` pulls both in transitively — `toml` through `@coral-xyz/anchor` and
+  `stream-json` through `jayson` — at versions carrying a prototype-pollution
+  and an uncontrolled-recursion advisory (`toml`) and a quadratic-filter
+  advisory (`stream-json`). Overriding them takes `npm audit` back to 0.
+- Drop the unused `viem` dependency. Nothing in this package imported it.
+- Bump `@tetherto/wdk-wallet-evm` from `1.0.0-beta.16` to `1.0.0-beta.18`, which
+  introduces WDK's typed error hierarchy.
+- Add `@tetherto/wdk-wallet` as a direct dependency. Its error classes are used
+  in this package's public API, so it should not be relied on transitively.
+- `WalletManagerEvmHinkal` now accepts only a BIP-39 seed phrase or seed bytes.
+  Hinkal derives its shielded keys from the seed, so a pre-built signer could
+  never back a Hinkal account; the constructor previously accepted one and failed
+  later at the first `getAccount` call. It now raises `InvalidSignerError`
+  immediately.
+- `HinkalError` extends WDK's `WdkError` instead of `Error`, so callers can catch
+  every WDK error uniformly.
+
+### Fixed
+
+- `getAccount(index)` derived `${index}'/0/0` instead of `0'/0/${index}`, so it
+  varied the BIP-44 account level where `WalletManagerEvm` varies the address
+  index. The two agree at index 0 and diverge above it, so `getAccount(1)` and
+  higher returned a different address than the same call on the base manager.
+
+### Removed
+
+- `ProviderNotConnectedError`, in favour of WDK's `ProviderRequiredError`, which
+  models the same condition.
+
+### Added
+
+- `getAccount` is overridden so every account is a `WalletAccountEvmHinkal`. The
+  inherited implementation builds a plain `WalletAccountEvm` when given a signer
+  name, which silently dropped Hinkal support.
+- `dispose` is overridden to clear `_hinkalSigner` and `_hinkalSession`. The
+  inherited implementation disposes only the parent signer, leaving the Hinkal
+  signer's key material reachable.
+- Re-export `WdkError`, `InvalidSignerError`, and `ProviderRequiredError`.
+
+### Documentation
+
+- Document that `transactionMaxFee` and `transferMaxFee` do not apply to
+  `privateSend`: the SDK builds and submits the deposit internally and exposes no
+  pre-flight quote, so no cost can be compared against a cap before funds move.
+- Document Bare support, verified against Bare v1.30.3 on Base mainnet: private
+  sends, stuck-UTXO balances, and stuck-UTXO recovery all complete.
+- Fix the `@tetherto/wdk-wallet-evm` interface link, which pointed at the
+  `wdk-wallet` repository.
+
 ## [0.0.6] - 2026-08-26
 
 ### Changed

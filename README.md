@@ -1,4 +1,4 @@
-# @hinkal/wdk-wallet-evm
+# @hinkal/wdk-wallet-evm-hinkal
 
 [![Built with WDK](https://raw.githubusercontent.com/Hinkal-Protocol/wdk-wallet-evm-hinkal/main/assets/built-with-wdk.svg)](https://docs.wdk.tether.io)
 
@@ -15,18 +15,18 @@ All existing WDK wallet methods work unchanged.
 
 ## Interface
 
-Implements the [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet/tree/main/src) `WalletManagerEvm` / `WalletAccountEvm` interface.
+Implements the [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet-evm) `WalletManagerEvm` / `WalletAccountEvm` interface.
 
 ## Installation
 
 ```sh
-npm install @hinkal/wdk-wallet-evm
+npm install @hinkal/wdk-wallet-evm-hinkal
 ```
 
 ## Usage
 
 ```js
-import WalletManagerEvmHinkal from "@hinkal/wdk-wallet-evm";
+import WalletManagerEvmHinkal from "@hinkal/wdk-wallet-evm-hinkal";
 
 const wallet = new WalletManagerEvmHinkal(seed, {
   provider: "https://ethereum-sepolia-rpc.publicnode.com", // any EVM RPC
@@ -48,16 +48,41 @@ const balances = await account.stuckUtxoBalances();
 const { hashes } = await account.withdrawStuckUtxos({ token: "0x..." });
 ```
 
+Accounts can also be fetched by derivation path:
+
+```js
+const account = await wallet.getAccountByPath("0'/0/0");
+```
+
+Call `account.dispose()` when finished to clear the account's key material.
+
+The manager accepts only a seed, so `getAccount` and `getAccountByPath` reject
+the `signerName` option with `InvalidSignerError`.
+
 See [`examples/`](./examples) for a runnable script.
 
 ## Configuration
 
 Configuration is passed to the `WalletManagerEvmHinkal` constructor and forwarded to the underlying WDK EVM wallet.
 
+The manager accepts **only a BIP-39 seed phrase or seed bytes**. Hinkal derives
+its shielded keys from the seed, so a pre-built signer — including a hardware
+signer, or one named through the `signerName` option — cannot back a Hinkal
+account. Passing one raises `InvalidSignerError` at construction rather than
+failing later at first account access.
+
 | Option     | Type                 | Default | Description                                                |
 | ---------- | -------------------- | ------- | ---------------------------------------------------------- |
 | `provider` | `string \| string[]` | —       | RPC URL(s) for the chain. Multiple enable failover.        |
 | `retries`  | `number`             | `3`     | Failover provider retry count (when `provider` is a list). |
+
+`transactionMaxFee` and `transferMaxFee` are honoured by the inherited
+`sendTransaction` and `transfer`, which quote a transaction before sending it.
+They do **not** apply to `privateSend`: Hinkal builds, signs, and submits the
+deposit inside the SDK, which exposes no pre-flight quote, so there is no cost
+to compare against a cap before the funds move. The relayer's fee is separate
+again and is taken from the shielded amount. Callers needing a ceiling should
+check `quoteSendTransaction` against their own limit, or constrain the amount.
 
 Chain selection is implicit: operations run on the chain the configured `provider` is connected to.
 
@@ -74,12 +99,14 @@ Any EVM chain that Hinkal supports and that the configured provider is connected
 
 ## Errors
 
-This module's own errors extend `HinkalError`, which extends `Error`. Each
-carries an `isUserActionable` flag so a wallet UI can tell end-user errors (bad
-input) apart from developer errors (misconfiguration):
+This module's own errors extend `HinkalError`, which extends WDK's `WdkError`.
+Each carries an `isUserActionable` flag so a wallet UI can tell end-user errors
+(bad input) apart from developer errors (misconfiguration). Conditions WDK
+already models — a missing provider, an unusable signer — raise WDK's own typed
+errors rather than Hinkal-specific ones:
 
 ```js
-import { HinkalError } from "@hinkal/wdk-wallet-evm";
+import { HinkalError } from "@hinkal/wdk-wallet-evm-hinkal";
 
 try {
   await account.privateSend(opts);
@@ -90,15 +117,32 @@ try {
 }
 ```
 
-| Error                       | User-actionable | Thrown when                                                        |
-| --------------------------- | :-------------: | ------------------------------------------------------------------ |
-| `InvalidRecipientError`     |       yes       | `privateSend` receives an invalid recipient address.               |
-| `InvalidAmountError`        |       yes       | `privateSend` receives a non-positive amount.                      |
-| `ProviderNotConnectedError` |       no        | An operation runs while the wallet is not connected to a provider. |
-| `HinkalError`               |        —        | Base class for all of the above.                                   |
+| Error                   | User-actionable | Thrown when                                                         |
+| ----------------------- | :-------------: | ------------------------------------------------------------------- |
+| `InvalidRecipientError` |       yes       | `privateSend` receives an invalid recipient address.                |
+| `InvalidAmountError`    |       yes       | `privateSend` receives a non-positive amount.                       |
+| `HinkalError`           |        —        | Base class for this module's errors; extends `WdkError`.            |
+| `ProviderRequiredError` |        —        | An operation runs while the wallet is not connected to a provider.  |
+| `InvalidSignerError`    |        —        | The manager is given a signer instead of a seed, or a `signerName`. |
+
+`ProviderRequiredError` and `InvalidSignerError` come from
+`@tetherto/wdk-wallet` and are re-exported here for convenience.
 
 Errors originating in the Hinkal SDK (network, relayer, proof generation,
 unsupported token) propagate as-is.
+
+## Runtime support
+
+Node.js and [Bare](https://github.com/holepunchto/bare). Under Bare, import the
+package's `bare` entry point, which Bare selects automatically:
+
+```js
+import WalletManagerEvmHinkal from "@hinkal/wdk-wallet-evm-hinkal";
+```
+
+Verified against Bare v1.30.3 on Base mainnet: private sends, stuck-UTXO
+balances, and stuck-UTXO recovery all complete. Requires `@hinkal/common`
+`0.3.13` or later.
 
 ## Testing
 
